@@ -15,12 +15,11 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.DESedeKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.DestroyFailedException;
-import javax.security.auth.Destroyable;
 
 /**
  * This class represents a DES-EDE key.
  */
-final class DESedeKey implements SecretKey, Destroyable {
+final class DESedeKey implements SecretKey, CleanableObject {
 
     static final long serialVersionUID = -262568625658400172L;
 
@@ -45,6 +44,8 @@ final class DESedeKey implements SecretKey, Destroyable {
         DESedeKeyGenerator.setParityBit(key, 0);
         DESedeKeyGenerator.setParityBit(key, 8);
         DESedeKeyGenerator.setParityBit(key, 16);
+
+        OpenJCEPlusProvider.registerCleanable(this);
     }
 
     @Override
@@ -156,16 +157,12 @@ final class DESedeKey implements SecretKey, Destroyable {
      * This function zeroizes the key so that it isn't in memory when GC is done.
      */
     @Override
-    protected void finalize() throws Throwable {
-        try {
-            synchronized (this) {
-                if (this.key != null) {
-                    Arrays.fill(this.key, (byte) 0x00);
-                    this.key = null;
-                }
+    public void cleanup() {
+        synchronized (this) {
+            if (this.key != null) {
+                Arrays.fill(this.key, (byte) 0x00);
+                this.key = null;
             }
-        } finally {
-            super.finalize();
         }
     }
 }

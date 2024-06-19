@@ -8,14 +8,17 @@
 
 package com.ibm.crypto.plus.provider.ock;
 
+import com.ibm.crypto.plus.provider.CleanableObject;
+import com.ibm.crypto.plus.provider.OpenJCEPlusProvider;
 import com.ibm.crypto.plus.provider.Poly1305Constants;
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
+
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.ShortBufferException;
 
-public final class Poly1305Cipher implements Poly1305Constants {
+public final class Poly1305Cipher implements Poly1305Constants, CleanableObject {
 
     private OCKContext ockContext;
     private long ockCipherId;
@@ -56,6 +59,8 @@ public final class Poly1305Cipher implements Poly1305Constants {
         this.ockContext = ockContext;
         this.ockCipherId = NativeInterface.POLY1305CIPHER_create(ockContext.getId(), cipherName);
         this.padding = padding;
+
+        OpenJCEPlusProvider.registerCleanableC(this, new WeakReference<CleanableObject>(this));
     }
 
     public synchronized void initCipherEncrypt(byte[] key, byte[] iv) throws OCKException {
@@ -95,6 +100,7 @@ public final class Poly1305Cipher implements Poly1305Constants {
                 Arrays.fill(reinitKey, (byte) 0x00);
             }
             this.reinitKey = key.clone();
+            OpenJCEPlusProvider.registerCleanableB(this, cleanKeyArray(this.reinitKey));
         }
         if (iv != reinitIV) {
             this.reinitIV = (iv == null) ? null : iv.clone();
@@ -375,19 +381,20 @@ public final class Poly1305Cipher implements Poly1305Constants {
     }
 
     @Override
-    protected synchronized void finalize() throws Throwable {
-        try {
-            if (ockCipherId != 0) {
+    public synchronized void cleanup() {
+        System.out.println("Cleanup called on Poly1305Cipher instance.");
+        if (ockCipherId != 0) {
+            try {
                 NativeInterface.POLY1305CIPHER_delete(ockContext.getId(), ockCipherId);
-                ockCipherId = 0;
+            } catch (OCKException e) {
+                e.printStackTrace();
             }
-        } finally {
-            if (reinitKey != null) {
-                Arrays.fill(reinitKey, (byte) 0x00);
-                reinitKey = null;
-            }
+            ockCipherId = 0;
+        }
 
-            super.finalize();
+        if (reinitKey != null) {
+            Arrays.fill(reinitKey, (byte) 0x00);
+            reinitKey = null;
         }
     }
 
@@ -409,5 +416,27 @@ public final class Poly1305Cipher implements Poly1305Constants {
             baos.write(input, inputOffset, inputLen);
         }
         return baos.toByteArray();
+    }
+
+    private static Runnable cleanOCKResources(long ockCipherId, OCKContext ockContext) {
+        return () -> {
+            System.out.println("Cleanup called on Poly1305Cipher instance: OCK resources.");
+            if (ockCipherId != 0) {
+                try {
+                    NativeInterface.POLY1305CIPHER_delete(ockContext.getId(), ockCipherId);
+                } catch (OCKException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+    }
+
+    private static Runnable cleanKeyArray(byte[] reinitKey) {
+        return () -> {
+            System.out.println("Cleanup called on Poly1305Cipher instance: Reinit key.");
+            if (reinitKey != null) {
+                Arrays.fill(reinitKey, (byte) 0x00);
+            }
+        };
     }
 }

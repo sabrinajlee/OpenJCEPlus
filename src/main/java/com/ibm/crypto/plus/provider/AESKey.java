@@ -18,7 +18,7 @@ import javax.security.auth.DestroyFailedException;
 /**
  * This class represents an AES key.
  */
-final class AESKey implements SecretKey {
+final class AESKey implements SecretKey, CleanableObject {
 
     static final long serialVersionUID = -8899864838936117258L;
 
@@ -42,6 +42,8 @@ final class AESKey implements SecretKey {
 
         this.key = new byte[key.length];
         System.arraycopy(key, 0, this.key, 0, key.length);
+
+        OpenJCEPlusProvider.registerCleanableC(this, new WeakReference<>(this));
     }
 
     @Override
@@ -154,16 +156,12 @@ final class AESKey implements SecretKey {
      * done.
      */
     @Override
-    protected void finalize() throws Throwable {
-        try {
-            synchronized (this) {
-                if (this.key != null) {
-                    Arrays.fill(this.key, (byte) 0x00);
-                    this.key = null;
-                }
+    public void cleanup() {
+        synchronized (this) {
+            if (this.key != null) {
+                Arrays.fill(this.key, (byte) 0x00);
+                this.key = null;
             }
-        } finally {
-            super.finalize();
         }
     }
 }

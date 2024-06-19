@@ -8,6 +8,8 @@
 
 package com.ibm.crypto.plus.provider.ock;
 
+import com.ibm.crypto.plus.provider.CleanableObject;
+import com.ibm.crypto.plus.provider.OpenJCEPlusProvider;
 import java.nio.ByteBuffer;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -18,6 +20,8 @@ import javax.crypto.AEADBadTagException;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.ShortBufferException;
+import com.ibm.crypto.plus.provider.CleanableObject;
+import com.ibm.crypto.plus.provider.OpenJCEPlusProvider;
 
 @SuppressWarnings({"removal", "deprecation"})
 public final class GCMCipher {
@@ -1032,24 +1036,26 @@ public final class GCMCipher {
         return buffer.array();
     }
 
-    static class GCMContextPointer {
+    static class GCMContextPointer implements CleanableObject{
         long gcmCtx = 0;
         long ockContext = 0;
 
         GCMContextPointer(long ockContext) throws OCKException {
             this.gcmCtx = NativeInterface.create_GCM_context(ockContext);
             this.ockContext = ockContext;
+
+            OpenJCEPlusProvider.registerCleanable(this);
         }
 
         @Override
-        protected synchronized void finalize() throws Throwable {
+        public synchronized void cleanup() {
             try {
                 if (gcmCtx != 0) {
                     NativeInterface.free_GCM_ctx(ockContext, gcmCtx);
                     gcmCtx = 0;
                 }
-            } finally {
-                super.finalize();
+            } catch (OCKException e) {
+                e.printStackTrace();
             }
         }
 

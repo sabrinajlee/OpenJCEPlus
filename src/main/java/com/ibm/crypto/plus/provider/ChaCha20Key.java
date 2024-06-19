@@ -18,7 +18,7 @@ import javax.security.auth.DestroyFailedException;
 /**
  * This class represents an ChaCha20 key.
  */
-final class ChaCha20Key implements SecretKey, ChaCha20Constants {
+final class ChaCha20Key implements SecretKey, ChaCha20Constants, CleanableObject {
 
     static final long serialVersionUID = -8899864838936117258L;
 
@@ -43,6 +43,8 @@ final class ChaCha20Key implements SecretKey, ChaCha20Constants {
 
         this.key = new byte[key.length];
         System.arraycopy(key, 0, this.key, 0, key.length);
+
+        OpenJCEPlusProvider.registerCleanable(this);
     }
 
     @Override
@@ -155,16 +157,12 @@ final class ChaCha20Key implements SecretKey, ChaCha20Constants {
      * done.
      */
     @Override
-    protected void finalize() throws Throwable {
-        try {
-            synchronized (this) {
-                if (this.key != null) {
-                    Arrays.fill(this.key, (byte) 0x00);
-                    this.key = null;
-                }
+    public void cleanup() {
+        synchronized (this) {
+            if (this.key != null) {
+                Arrays.fill(this.key, (byte) 0x00);
+                this.key = null;
             }
-        } finally {
-            super.finalize();
         }
     }
 }

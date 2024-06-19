@@ -13,7 +13,10 @@ import java.security.SecureRandom;
 import java.security.spec.ECParameterSpec;
 import java.util.Arrays;
 
-public final class ECKey implements AsymmetricKey {
+import com.ibm.crypto.plus.provider.CleanableObject;
+import com.ibm.crypto.plus.provider.OpenJCEPlusProvider;
+
+public final class ECKey implements AsymmetricKey, CleanableObject {
 
     private static final String ALLOW_INCORRECT_KEYSIZES = "openjceplus.ec.allowIncorrectKeysizes";
     private static final boolean allowIncorrectKeysizes = Boolean.parseBoolean(System.getProperty(ALLOW_INCORRECT_KEYSIZES, "false"));
@@ -77,6 +80,8 @@ public final class ECKey implements AsymmetricKey {
         //OCKDebug.Msg (debPrefix, methodName, "privateKeyBytes :", privateKeyBytes); 
         //OCKDebug.Msg (debPrefix, methodName, "publicKeyBytes :", publicKeyBytes);  
         //OCKDebug.Msg (debPrefix, methodName, "parameterBytes :", parameterBytes);
+
+        OpenJCEPlusProvider.registerCleanable(this);
     }
 
     /* Custom Curve */
@@ -95,6 +100,7 @@ public final class ECKey implements AsymmetricKey {
         // this.pubKeyAffineX = pubKeyAffineX;
         // this.pubKeyAffineY = pubKeyAffineY;
 
+        OpenJCEPlusProvider.registerCleanable(this);
     }
 
     // Note that the caller of this method must ensure the pointer ecKeyId is not used
@@ -319,14 +325,13 @@ public final class ECKey implements AsymmetricKey {
     }
 
     @Override
-    protected synchronized void finalize() throws Throwable {
+    public synchronized void cleanup() {
         //final String methodName = "finalize ";
         //OCKDebug.Msg(debPrefix, methodName,  "ecKeyId :" + ecKeyId + " pkeyId=" + pkeyId);
+        if ((privateKeyBytes != null) && (privateKeyBytes != unobtainedKeyBytes)) {
+            Arrays.fill(privateKeyBytes, (byte) 0x00);
+        }
         try {
-            if ((privateKeyBytes != null) && (privateKeyBytes != unobtainedKeyBytes)) {
-                Arrays.fill(privateKeyBytes, (byte) 0x00);
-            }
-
             if (ecKeyId != 0) {
                 NativeInterface.ECKEY_delete(ockContext.getId(), ecKeyId);
                 ecKeyId = 0;
@@ -336,8 +341,8 @@ public final class ECKey implements AsymmetricKey {
                 NativeInterface.PKEY_delete(ockContext.getId(), pkeyId);
                 pkeyId = 0;
             }
-        } finally {
-            super.finalize();
+        } catch (OCKException e) {
+            e.printStackTrace();
         }
     }
 
