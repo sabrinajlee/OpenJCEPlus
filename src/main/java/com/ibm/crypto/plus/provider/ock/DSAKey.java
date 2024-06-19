@@ -10,7 +10,10 @@ package com.ibm.crypto.plus.provider.ock;
 
 import java.util.Arrays;
 
-public final class DSAKey implements AsymmetricKey {
+import com.ibm.crypto.plus.provider.CleanableObject;
+import com.ibm.crypto.plus.provider.OpenJCEPlusProvider;
+
+public final class DSAKey implements AsymmetricKey, CleanableObject {
 
     // The following is a special byte[] instance to indicate that the
     // private/public key bytes are available but not yet obtained.
@@ -130,6 +133,8 @@ public final class DSAKey implements AsymmetricKey {
         this.parameters = parameters;
         this.privateKeyBytes = privateKeyBytes;
         this.publicKeyBytes = publicKeyBytes;
+
+        OpenJCEPlusProvider.registerCleanable(this);
     }
 
     @Override
@@ -245,14 +250,14 @@ public final class DSAKey implements AsymmetricKey {
     }
 
     @Override
-    protected synchronized void finalize() throws Throwable {
+    public synchronized void cleanup() {
         //final String methodName = "finalize";
         //OCKDebug.Msg (debPrefix, methodName,  "dsaKeyId :" + dsaKeyId + " pkeyId :" + pkeyId);
-        try {
-            if ((privateKeyBytes != null) && (privateKeyBytes != unobtainedKeyBytes)) {
-                Arrays.fill(privateKeyBytes, (byte) 0x00);
-            }
+        if ((privateKeyBytes != null) && (privateKeyBytes != unobtainedKeyBytes)) {
+            Arrays.fill(privateKeyBytes, (byte) 0x00);
+        }
 
+        try {
             if (dsaKeyId != 0) {
                 NativeInterface.DSAKEY_delete(ockContext.getId(), dsaKeyId);
                 dsaKeyId = 0;
@@ -262,8 +267,8 @@ public final class DSAKey implements AsymmetricKey {
                 NativeInterface.PKEY_delete(ockContext.getId(), pkeyId);
                 pkeyId = 0;
             }
-        } finally {
-            super.finalize();
+        } catch (OCKException e) {
+            e.printStackTrace();
         }
     }
 

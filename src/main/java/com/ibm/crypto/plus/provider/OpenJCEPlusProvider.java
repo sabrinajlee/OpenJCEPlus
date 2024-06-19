@@ -8,8 +8,12 @@
 
 package com.ibm.crypto.plus.provider;
 
-import com.ibm.crypto.plus.provider.ock.OCKContext;
+import java.lang.ref.Cleaner;
+import java.lang.ref.WeakReference;
 import java.security.ProviderException;
+import java.util.concurrent.ThreadFactory;
+
+import com.ibm.crypto.plus.provider.ock.OCKContext;
 
 // Internal interface for OpenJCEPlus and OpenJCEPlus implementation classes.
 // Implemented as an abstract class rather than an interface so that 
@@ -29,6 +33,10 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     //    private static boolean verifiedSelfIntegrity = false;
     private static final boolean verifiedSelfIntegrity = true;
 
+    private static final Cleaner cleaner = Cleaner.create();
+
+    private static final Cleaner cleaner = Cleaner.create(new CleanerThreadFactory());
+
     OpenJCEPlusProvider(String name, String info) {
         super(name, PROVIDER_VER, info);
     }
@@ -39,6 +47,32 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
         }
 
         return doSelfVerification(c);
+    }
+
+    public static void registerCleanableC(Object owner, WeakReference<CleanableObject> ownerRef) {
+        cleaner.register(owner, new Runnable() {
+            @Override
+            public void run() {
+                ownerRef.get().cleanup();
+            }
+        });
+    }
+
+    public static void registerCleanableB(Object owner, Runnable cleanAction) {
+        cleaner.register(owner, cleanAction);
+    }
+
+    public static void registerCleanableB(CleanableObject owner, Runnable cleanAction) {
+        cleaner.register(owner, cleanAction);
+    }
+
+    public static void registerCleanable(CleanableObject owner) {
+        cleaner.register(owner, new Runnable() {
+            @Override
+            public void run() {
+                owner.cleanup();
+            }
+        });
     }
 
     private static final synchronized boolean doSelfVerification(Object c) {
@@ -77,4 +111,15 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     abstract ProviderException providerException(String message, Throwable ockException);
 
     abstract void setOCKExceptionCause(Exception exception, Throwable ockException);
+
+    private static class CleanerThreadFactory implements ThreadFactory {
+
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread thread = new Thread(r);
+            thread.setPriority(Thread.MAX_PRIORITY);
+            return thread;
+        }
+        
+    }
 }

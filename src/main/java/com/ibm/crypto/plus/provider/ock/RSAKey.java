@@ -11,7 +11,10 @@ package com.ibm.crypto.plus.provider.ock;
 import java.math.BigInteger;
 import java.util.Arrays;
 
-public final class RSAKey implements AsymmetricKey {
+import com.ibm.crypto.plus.provider.CleanableObject;
+import com.ibm.crypto.plus.provider.OpenJCEPlusProvider;
+
+public final class RSAKey implements AsymmetricKey, CleanableObject {
 
     // The following is a special byte[] instance to indicate that the
     // private/public key bytes are available but not yet obtained.
@@ -84,6 +87,8 @@ public final class RSAKey implements AsymmetricKey {
         this.privateKeyBytes = privateKeyBytes;
         this.publicKeyBytes = publicKeyBytes;
         this.keySize = 0;
+
+        OpenJCEPlusProvider.registerCleanable(this);
     }
 
     @Override
@@ -189,7 +194,7 @@ public final class RSAKey implements AsymmetricKey {
     }
 
     @Override
-    protected synchronized void finalize() throws Throwable {
+    public synchronized void cleanup() {
         //final String methodName = "finalize ";
         //OCKDebug.Msg(debPrefix, methodName, "rsaKeyId=" + rsaKeyId + " pkeyId=" + pkeyId);
         try {
@@ -206,8 +211,8 @@ public final class RSAKey implements AsymmetricKey {
                 NativeInterface.PKEY_delete(ockContext.getId(), pkeyId);
                 pkeyId = 0;
             }
-        } finally {
-            super.finalize();
+        } catch (OCKException e) {
+            e.printStackTrace();
         }
     }
 

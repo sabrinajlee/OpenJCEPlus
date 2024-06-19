@@ -12,7 +12,10 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.InvalidParameterException;
 
-public final class SignatureRSAPSS {
+import com.ibm.crypto.plus.provider.CleanableObject;
+import com.ibm.crypto.plus.provider.OpenJCEPlusProvider;
+
+public final class SignatureRSAPSS implements CleanableObject{
 
     public enum InitOp {
         INITSIGN, INITVERIFY
@@ -50,6 +53,8 @@ public final class SignatureRSAPSS {
         this.mgfAlgo = mgfAlgo;
         this.mgf1SpecAlgo = mgf1SpecAlgo;
         this.digestAlgo = digestAlgo;
+
+        OpenJCEPlusProvider.registerCleanable(this);
     }
 
     public synchronized void setParameter(String digestAlgo, int saltlen, int trailerField,
@@ -255,7 +260,7 @@ public final class SignatureRSAPSS {
 
     //
     @Override
-    protected synchronized void finalize() throws Throwable {
+    public synchronized void cleanup() {
         //final String methodName = "finalize";
 
         try {
@@ -263,8 +268,8 @@ public final class SignatureRSAPSS {
                 NativeInterface.RSAPSS_releaseContext(ockContext.getId(), rsaPssId);
                 rsaPssId = 0;
             }
-        } finally {
-            super.finalize();
+        } catch (OCKException e) {
+            e.printStackTrace();
         }
     }
 

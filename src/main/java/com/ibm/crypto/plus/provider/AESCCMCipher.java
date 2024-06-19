@@ -32,7 +32,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.ShortBufferException;
 import sun.security.util.Debug;
 
-public final class AESCCMCipher extends CipherSpi implements AESConstants, CCMConstants {
+public final class AESCCMCipher extends CipherSpi implements AESConstants, CCMConstants, CleanableObject {
 
     String debPrefix = "AESCCMCipher ";
 
@@ -111,6 +111,8 @@ public final class AESCCMCipher extends CipherSpi implements AESConstants, CCMCo
             throw provider.providerException("Failed to initialize cipher context", e);
         }
         buffer = new byte[AES_BLOCK_SIZE * 2];
+
+        OpenJCEPlusProvider.registerCleanable(this);
     }
 
 
@@ -737,23 +739,21 @@ public final class AESCCMCipher extends CipherSpi implements AESConstants, CCMCo
         return (encrypting) ? Cipher.ENCRYPT_MODE : Cipher.DECRYPT_MODE;
     }
 
-
     @Override
-    protected synchronized void finalize() throws Throwable {
-        //final String methodName = "finalize";
-        // OCKDebug.Msg (debPrefix, methodName, "finalize called");
-        try {
-            if (ockContext != null) {
+    public void cleanup() {
+        if (ockContext != null) {
+            try {
                 CCMCipher.doCCM_cleanup(ockContext);
+            } catch (OCKException e) {
+                e.printStackTrace();
             }
-            if (Key != null) {
-                Arrays.fill(Key, (byte) 0x00);
-                Key = null;
-            }
-        } finally {
-            super.finalize();
+        }
+        if (Key != null) {
+            Arrays.fill(Key, (byte) 0x00);
+            Key = null;
         }
     }
+
 
 
     private void checkReinit() {

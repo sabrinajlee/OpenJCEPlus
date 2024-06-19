@@ -8,7 +8,10 @@
 
 package com.ibm.crypto.plus.provider.ock;
 
-public final class ExtendedRandom {
+import com.ibm.crypto.plus.provider.CleanableObject;
+import com.ibm.crypto.plus.provider.OpenJCEPlusProvider;
+
+public final class ExtendedRandom implements CleanableObject {
 
     OCKContext ockContext;
     long ockPRNGContextId;
@@ -29,6 +32,8 @@ public final class ExtendedRandom {
     private ExtendedRandom(OCKContext ockContext, String algName) throws OCKException {
         this.ockContext = ockContext;
         this.ockPRNGContextId = NativeInterface.EXTRAND_create(ockContext.getId(), algName);
+
+        OpenJCEPlusProvider.registerCleanable(this);
     }
 
     public synchronized void nextBytes(byte[] bytes) throws OCKException {
@@ -52,14 +57,14 @@ public final class ExtendedRandom {
     }
 
     @Override
-    protected synchronized void finalize() throws Throwable {
-        try {
-            if (ockPRNGContextId != 0) {
+    public synchronized void cleanup() {
+        if (ockPRNGContextId != 0) {
+            try {
                 NativeInterface.EXTRAND_delete(ockContext.getId(), ockPRNGContextId);
-                ockPRNGContextId = 0;
+            } catch (OCKException e) {
+                e.printStackTrace();
             }
-        } finally {
-            super.finalize();
+            ockPRNGContextId = 0;
         }
     }
 }

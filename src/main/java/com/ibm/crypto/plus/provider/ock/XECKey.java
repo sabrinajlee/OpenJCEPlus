@@ -10,7 +10,10 @@ package com.ibm.crypto.plus.provider.ock;
 
 import java.util.Arrays;
 
-public final class XECKey implements AsymmetricKey {
+import com.ibm.crypto.plus.provider.CleanableObject;
+import com.ibm.crypto.plus.provider.OpenJCEPlusProvider;
+
+public final class XECKey implements AsymmetricKey, CleanableObject {
     // The following is a special byte[] instance to indicate that the
     // private/public key bytes are available but not yet obtained.
     //
@@ -37,6 +40,8 @@ public final class XECKey implements AsymmetricKey {
         this.xecKeyId = xecKeyId;
         this.privateKeyBytes = privateKeyBytes;
         this.publicKeyBytes = publicKeyBytes;
+
+        OpenJCEPlusProvider.registerCleanable(this);
     }
 
 
@@ -112,7 +117,7 @@ public final class XECKey implements AsymmetricKey {
     }
 
     @Override
-    protected synchronized void finalize() throws Throwable {
+    public synchronized void cleanup() {
         //final String methodName = "finalize ";
         //OCKDebug.Msg(debPrefix, methodName,  "ecKeyId :" + ecKeyId + " pkeyId=" + pkeyId);
         try {
@@ -124,8 +129,8 @@ public final class XECKey implements AsymmetricKey {
                 NativeInterface.XECKEY_delete(ockContext.getId(), xecKeyId);
                 xecKeyId = 0;
             }
-        } finally {
-            super.finalize();
+        } catch (OCKException e) {
+            e.printStackTrace();
         }
     }
 

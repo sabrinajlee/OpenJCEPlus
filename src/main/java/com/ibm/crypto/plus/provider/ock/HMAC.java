@@ -10,7 +10,10 @@ package com.ibm.crypto.plus.provider.ock;
 
 import java.util.Arrays;
 
-public final class HMAC {
+import com.ibm.crypto.plus.provider.CleanableObject;
+import com.ibm.crypto.plus.provider.OpenJCEPlusProvider;
+
+public final class HMAC implements CleanableObject{
 
     private OCKContext ockContext = null;
     private long hmacId = 0;
@@ -46,6 +49,8 @@ public final class HMAC {
         this.ockContext = ockContext;
         this.hmacId = NativeInterface.HMAC_create(ockContext.getId(), digestAlgo);
         //OCKDebug.Msg (debPrefix, methodName,  "this.hmacId :" + this.hmacId + " digestAlgo :" + digestAlgo);
+
+        OpenJCEPlusProvider.registerCleanable(this);
     }
 
     public synchronized void initialize(byte[] key) throws OCKException {
@@ -145,21 +150,20 @@ public final class HMAC {
     }
 
     @Override
-    protected synchronized void finalize() throws Throwable {
+    public synchronized void cleanup() {
         //final String methodName = "finalize ";
         //OCKDebug.Msg (debPrefix, methodName,  "hamcId :" + hmacId + " reinitKey :" + reinitKey);
-        try {
-            if (hmacId != 0) {
+        if (hmacId != 0) {
+            try {
                 NativeInterface.HMAC_delete(ockContext.getId(), hmacId);
-                hmacId = 0;
+            } catch (OCKException e) {
+                e.printStackTrace();
             }
-        } finally {
-            if (reinitKey != null) {
-                Arrays.fill(reinitKey, (byte) 0x00);
-                reinitKey = null;
-            }
-
-            super.finalize();
+            hmacId = 0;
+        }
+        if (reinitKey != null) {
+            Arrays.fill(reinitKey, (byte) 0x00);
+            reinitKey = null;
         }
     }
 
