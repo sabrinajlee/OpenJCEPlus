@@ -138,7 +138,7 @@ public final class SymmetricCipher{
             this.ockCipherId = NativeInterface.CIPHER_create(ockContext.getId(), cipherName);
         }
 
-        OpenJCEPlusProvider.registerCleanableC(this, cleanOCKResources(this.ockCipherId, this.ockContext));
+        OpenJCEPlusProvider.registerCleanableB(this, cleanOCKResources(this.ockCipherId, this.ockContext));
     }
 
     public synchronized void initCipherEncrypt(byte[] key, byte[] iv) throws OCKException {
@@ -176,7 +176,7 @@ public final class SymmetricCipher{
                 Arrays.fill(this.reinitKey, (byte) 0x00);
             }
             this.reinitKey = key.clone();
-            OpenJCEPlusProvider.registerCleanableC(this, cleanKeyArray(this.reinitKey));
+            OpenJCEPlusProvider.registerCleanableB(this, cleanKeyArray(this.reinitKey));
         }
         if (iv != reinitIV) {
             this.reinitIV = (iv == null) ? null : iv.clone();
