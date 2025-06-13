@@ -10,8 +10,16 @@ package com.ibm.crypto.plus.provider;
 
 import java.lang.ref.Cleaner;
 import java.lang.ref.WeakReference;
+import java.lang.ref.PhantomReference;
 import java.security.ProviderException;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.Queue;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
+import java.lang.ref.ReferenceQueue;
 
 import com.ibm.crypto.plus.provider.ock.OCKContext;
 
@@ -28,14 +36,54 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     private static final String JAVA_VER = System.getProperty("java.specification.version");
 
+    private static final double DEFAULT_MAX_MEMORY = 0.6;
+
+    private static final double CUSTOM_MAX_MEMORY;
+
+    static {
+	double tempMaxMem = DEFAULT_MAX_MEMORY;
+
+        String newMaxMem = System.getProperty("my.maxMemory");
+
+        if (newMaxMem != null){
+            try {
+                double parsedValue = Double.parseDouble(newMaxMem);
+
+                if (parsedValue < 1 && parsedValue > 0){
+                    tempMaxMem = parsedValue;
+                }
+                else {
+                    System.out.println("Warning: Max memory must be set to a double between 0 and 1, default 0.6.");
+                }
+            }
+            catch (NumberFormatException e) {
+                System.out.println("Warning: Max memory must be set to a double.");
+            }
+        }
+	CUSTOM_MAX_MEMORY = tempMaxMem;
+    }
+
+
+
     static final String DEBUG_VALUE = "jceplus";
 
     //    private static boolean verifiedSelfIntegrity = false;
     private static final boolean verifiedSelfIntegrity = true;
 
-    private static final Cleaner cleaner = Cleaner.create();
+//    private static final Cleaner cleaner = Cleaner.create();
 
     private static final Cleaner cleaner = Cleaner.create(new CleanerThreadFactory());
+
+    private static final AtomicInteger counter = new AtomicInteger(0);
+
+    private static final ConcurrentHashMap<PhantomReference<CleanableObject>, Cleaner.Cleanable> map = new ConcurrentHashMap<>();
+    
+    private static  Runtime rt = Runtime.getRuntime();
+
+    private static final ReentrantLock lock = new ReentrantLock();
+
+    private static final ReferenceQueue<CleanableObject> queue = new ReferenceQueue<>();
+
 
     OpenJCEPlusProvider(String name, String info) {
         super(name, PROVIDER_VER, info);
@@ -55,7 +103,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
             public void run() {
                 ownerRef.get().cleanup();
             }
-        });
+         });
     }
 
     public static void registerCleanableB(Object owner, Runnable cleanAction) {
@@ -63,7 +111,55 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     }
 
     public static void registerCleanableB(CleanableObject owner, Runnable cleanAction) {
-        cleaner.register(owner, cleanAction);
+        Cleaner.Cleanable newCleanable = cleaner.register(owner, cleanAction);
+        addCleanableToMap(newCleanable, owner);
+    }
+
+    private static void addCleanableToMap(Cleaner.Cleanable cleanable, CleanableObject owner) {
+        long totalMemory = rt.totalMemory();
+        long freeMemory = rt.freeMemory();
+        long usedMemory = totalMemory - freeMemory;
+        PhantomReference<CleanableObject> ownerRef = new PhantomReference<>(owner, queue);
+
+        map.put(ownerRef,cleanable);
+        
+//	System.out.println("\n\n\nTOTAL MEMORY: " + totalMemory + "\n FREE MEMORY: " + freeMemory + "\n\n\n");
+
+        if (map.size() % 100000 == 0){
+            System.out.println("THERE ARE " + map.size() + " ITEMS WAITING TO BE CLEANED");
+            System.out.println("***** USED " + (double) usedMemory / totalMemory * 100 + "% OF MEMORY *******");
+	}
+
+        if (usedMemory >= (double) totalMemory * CUSTOM_MAX_MEMORY) {
+            clearMapItems();
+        }
+    }
+
+
+    private static void clearMapItems() {
+//        if (lock.tryLock()){
+//            try {
+                PhantomReference<CleanableObject> ownerRef = (PhantomReference<CleanableObject>) queue.poll();
+                while (ownerRef != null){
+                    Cleaner.Cleanable cleanable = map.get(ownerRef);
+                    if (cleanable != null) {
+                        map.remove(ownerRef, cleanable);
+                        cleanable.clean();
+//                        System.out.println("deleted 1");
+                    }
+                    else {
+                        System.out.println("Something went wrong: No cleanable mapped to this reference");
+                    }
+                    ownerRef = (PhantomReference<CleanableObject>) queue.poll();
+                }
+//            }
+//            finally {
+//                lock.unlock();
+//            }
+//        }
+//        else {
+           // System.out.print("Skip!");
+//        }
     }
 
     public static void registerCleanable(CleanableObject owner) {
@@ -107,7 +203,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     String getJavaVersionStr() {
         return JAVA_VER;
     }
-
+    
     abstract ProviderException providerException(String message, Throwable ockException);
 
     abstract void setOCKExceptionCause(Exception exception, Throwable ockException);
@@ -120,6 +216,8 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
             thread.setPriority(Thread.MAX_PRIORITY);
             return thread;
         }
-        
+
     }
 }
+      
+

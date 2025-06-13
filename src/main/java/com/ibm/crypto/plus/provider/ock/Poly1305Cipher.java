@@ -8,6 +8,7 @@
 
 package com.ibm.crypto.plus.provider.ock;
 
+import java.lang.ref.WeakReference;
 import com.ibm.crypto.plus.provider.CleanableObject;
 import com.ibm.crypto.plus.provider.OpenJCEPlusProvider;
 import com.ibm.crypto.plus.provider.Poly1305Constants;
