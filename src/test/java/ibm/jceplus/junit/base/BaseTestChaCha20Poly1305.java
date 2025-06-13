@@ -24,6 +24,11 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.ShortBufferException;
 import javax.crypto.spec.IvParameterSpec;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class BaseTestChaCha20Poly1305 extends BaseTestCipher implements ChaCha20Constants {
 
@@ -70,15 +75,24 @@ public class BaseTestChaCha20Poly1305 extends BaseTestCipher implements ChaCha20
     protected int specifiedKeySize = 0;
 
 
-//  @BeforeEach
 
+
+
+
+
+//    @BeforeEach
 
 
     //--------------------------------------------------------------------------
     //
     //
     public BaseTestChaCha20Poly1305(){//String providerName) {
-      //  super(providerName);
+
+
+
+
+
+  //      super(providerName);
 
 
          try {
