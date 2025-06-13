@@ -10,6 +10,7 @@ package com.ibm.crypto.plus.provider;
 
 import com.ibm.crypto.plus.provider.ock.CCMCipher;
 import com.ibm.crypto.plus.provider.ock.OCKContext;
+import com.ibm.crypto.plus.provider.ock.OCKException;
 import ibm.security.internal.spec.CCMParameterSpec;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;

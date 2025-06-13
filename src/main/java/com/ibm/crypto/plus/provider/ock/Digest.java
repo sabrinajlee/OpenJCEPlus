@@ -1,9 +1,9 @@
 /*
  * Copyright IBM Corp. 2023, 2024
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms provided by IBM in the LICENSE file that accompanied
- * this code, including the "Classpath" Exception described therein.
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution.
  */
 
 package com.ibm.crypto.plus.provider.ock;
@@ -25,79 +25,16 @@ public final class Digest implements Cloneable, CleanableObject {
        Cache native SHA* digest contexts so that the same contexts could be reused later after resetting.
        */
 
-    static private class Resources {
-        // index corresponding the SHA algorithm it's using
-        // also used as a flag:
-        // 0 - 4: it is using one of {SHA1, SHA224, SHA256, SHA384, SHA512}
-        // -1   : Not initialized
-        // -2   : Not a SHA* digest algorithm
-        private int algIndx = -1;
-        private boolean contextFromQueue = false;
+    // index corresponding the SHA algorithm it's using
+    // also used as a flag:
+    // 0 - 4: it is using one of {SHA1, SHA224, SHA256, SHA384, SHA512}
+    // -1   : Not initialized
+    // -2   : Not a SHA* digest algorithm
+    private int algIndx = -1;
 
-        private long digestId = 0;
-        private OCKContext ockContext = null;
+    private boolean needsReinit = false;
 
-        private boolean needsReinit = false;
-
-        private final String badIdMsg = "Digest Identifier is not valid";
-
-        public void reset() throws OCKException {
-            // reset now to make sure all contexts in the queue are ready to use
-            //OCKDebug.Msg(debPrefix, methodName,  "digestId =" + this.digestId);
-
-            if (this.digestId == 0) {
-                return;
-            }
-
-            if (!validId(this.digestId)) {
-                throw new OCKException(badIdMsg);
-            }
-            if (this.needsReinit) {
-                NativeInterface.DIGEST_reset(this.ockContext.getId(), this.digestId);
-            }
-        }
-
-        private void cleanup() {
-            //final String methodName = "finalize";
-
-            //OCKDebug.Msg(debPrefix, methodName,  "digestId =" + this.digestId);
-            try {
-                if (this.digestId == 0) {
-                    return;
-                }
-
-                // not SHA* algorithm
-                if (this.algIndx == -2) {
-                    if (validId(this.digestId)) {
-                        NativeInterface.DIGEST_delete(this.ockContext.getId(),
-                                this.digestId);
-                        this.digestId = 0;
-                    }
-                } else {
-                    if (this.contextFromQueue) {
-                        reset();
-
-                        this.needsReinit = false;
-                        contexts[this.algIndx].add(this.digestId);
-                        this.digestId = 0;
-                        this.contextFromQueue = false;
-                    } else {
-                        // delete context
-                        if (validId(this.digestId)) {
-                            NativeInterface.DIGEST_delete(this.ockContext.getId(),
-                                    this.digestId);
-                            this.digestId = 0;
-                        }
-                    }
-                }
-                this.digestId = 0;
-            } catch (OCKException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    
+    private boolean contextFromQueue = false;
 
     // Size of {SHA256, SHA384, SHA512, SHA224, SHA1}
     final static int[] digestLengths = {32, 48, 64, 28, 20};
@@ -156,68 +93,100 @@ public final class Digest implements Cloneable, CleanableObject {
             }
         }
 
-        if (this.resources.digestId != 0) {
+        if (this.digestId != 0) {
             return;
         }
 
-        if (this.resources.algIndx == -1) {
+        if (this.algIndx == -1) {
             switch (this.digestAlgo) {
                 case "SHA256":
-                    this.resources.algIndx = 0;
+                    this.algIndx = 0;
                     break;
                 case "SHA384":
-                    this.resources.algIndx = 1;
+                    this.algIndx = 1;
                     break;
                 case "SHA512":
-                    this.resources.algIndx = 2;
+                    this.algIndx = 2;
                     break;
                 case "SHA224":
-                    this.resources.algIndx = 3;
+                    this.algIndx = 3;
                     break;
                 case "SHA1":
-                    this.resources.algIndx = 4;
+                    this.algIndx = 4;
                     break;
                 default:
-                    this.resources.algIndx = -2;
+                    this.algIndx = -2;
                     break;
             }
         }
 
         // Algorithm is not SHA*
-        if (this.resources.algIndx == -2) {
-            this.resources.digestId = NativeInterface.DIGEST_create(this.resources.ockContext.getId(),
+        if (this.algIndx == -2) {
+            this.digestId = NativeInterface.DIGEST_create(this.ockContext.getId(),
                     this.digestAlgo);
         } else {
-            Long context = contexts[this.resources.algIndx].poll();
+            Long context = contexts[this.algIndx].poll();
 
             if (context == null) {
                 // Create new context
-                this.resources.digestId = NativeInterface
-                        .DIGEST_create(this.resources.ockContext.getId(), this.digestAlgo);
-                this.resources.contextFromQueue = (runtimeContextNum[this.resources.algIndx] < numContexts);
-                if (runtimeContextNum[this.resources.algIndx] < numContexts) {
-                    runtimeContextNum[this.resources.algIndx]++;
+                this.digestId = NativeInterface
+                        .DIGEST_create(this.ockContext.getId(), this.digestAlgo);
+                this.contextFromQueue = (runtimeContextNum[this.algIndx] < numContexts);
+                if (runtimeContextNum[this.algIndx] < numContexts) {
+                    runtimeContextNum[this.algIndx]++;
                 }
             } else {
-                this.resources.digestId = context;
-                this.resources.contextFromQueue = true;
+                this.digestId = context;
+                this.contextFromQueue = true;
             }
         }
-        this.resources.needsReinit = false;
+        this.needsReinit = false;
+    }
+
+    void releaseContext() throws OCKException {
+
+        if (this.digestId == 0) {
+            return;
+        }
+
+        // not SHA* algorithm
+        if (this.algIndx == -2) {
+            if (validId(this.digestId)) {
+                NativeInterface.DIGEST_delete(this.ockContext.getId(),
+                        this.digestId);
+                this.digestId = 0;
+            }
+        } else {
+            if (this.contextFromQueue) {
+                // reset now to make sure all contexts in the queue are ready to use
+                this.reset();
+                contexts[this.algIndx].add(this.digestId);
+                this.digestId = 0;
+                this.contextFromQueue = false;
+            } else {
+                // delete context
+                if (validId(this.digestId)) {
+                    NativeInterface.DIGEST_delete(this.ockContext.getId(),
+                            this.digestId);
+                    this.digestId = 0;
+                }
+            }
+        }
+        this.digestId = 0;
     }
 
     /* end digest caching mechanism
      * ===========================================================================
      */
 
-    private Resources resources;
+    private OCKContext ockContext = null;
     private int digestLength = 0;
     private final String badIdMsg = "Digest Identifier is not valid";
     private static final String debPrefix = "DIGEST";
 
     private String digestAlgo;
 
-    
+    private long digestId = 0;
 
     public static Digest getInstance(OCKContext ockContext, String digestAlgo) throws OCKException {
         if (ockContext == null) {
@@ -233,14 +202,12 @@ public final class Digest implements Cloneable, CleanableObject {
 
     private Digest(OCKContext ockContext, String digestAlgo) throws OCKException {
         //final String methodName = "Digest(String)";
-        this.resources = new Resources();
-
-        this.resources.ockContext = ockContext;
+        this.ockContext = ockContext;
         this.digestAlgo = digestAlgo;
         getContext();
         //OCKDebug.Msg(debPrefix, methodName,  "digestAlgo :" + digestAlgo);
 
-        OpenJCEPlusProvider.registerCleanableC(this, cleanOCKResources(digestId, algIndx,
+        OpenJCEPlusProvider.registerCleanableB(this, cleanOCKResources(digestId, algIndx,
                 contextFromQueue, needsReinit, ockContext));
     }
 
@@ -272,23 +239,23 @@ public final class Digest implements Cloneable, CleanableObject {
         }
 
         //OCKDebug.Msg(debPrefix, methodName, "offset :"  + offset + " digestId :" + this.digestId + " length :" + length);
-        if (!validId(this.resources.digestId)) {
+        if (!validId(this.digestId)) {
             throw new OCKException(badIdMsg);
         }
 
-        errorCode = NativeInterface.DIGEST_update(this.resources.ockContext.getId(),
-                this.resources.digestId, input, offset, length);
+        errorCode = NativeInterface.DIGEST_update(this.ockContext.getId(),
+                this.digestId, input, offset, length);
         if (errorCode < 0) {
             throwOCKException(errorCode);
         }
-        this.resources.needsReinit = true;
+        this.needsReinit = true;
     }
 
     public synchronized byte[] digest() throws OCKException {
         //final String methodName = "digest()";
         int errorCode = 0;
 
-        if (!validId(this.resources.digestId)) {
+        if (!validId(this.digestId)) {
             throw new OCKException(badIdMsg);
         }
         //OCKDebug.Msg (debPrefix, methodName, "digestId :" + this.digestId);
@@ -298,12 +265,12 @@ public final class Digest implements Cloneable, CleanableObject {
         int digestLength = getDigestLength();
         byte[] digestBytes = new byte[digestLength];
 
-        errorCode = NativeInterface.DIGEST_digest_and_reset(this.resources.ockContext.getId(),
-                this.resources.digestId, digestBytes);
+        errorCode = NativeInterface.DIGEST_digest_and_reset(this.ockContext.getId(),
+                this.digestId, digestBytes);
         if (errorCode < 0) {
             throwOCKException(errorCode);
         }
-        this.resources.needsReinit = false;
+        this.needsReinit = false;
 
         return digestBytes;
     }
@@ -311,7 +278,7 @@ public final class Digest implements Cloneable, CleanableObject {
     protected long getId() throws OCKException {
         //final String methodName = "getId()";
         //OCKDebug.Msg(debPrefix, methodName, "digestId :" + this.digestId);
-        return this.resources.digestId;
+        return this.digestId;
     }
 
     public int getDigestLength() throws OCKException {
@@ -324,21 +291,38 @@ public final class Digest implements Cloneable, CleanableObject {
         return digestLength;
     }
 
+    public synchronized void reset() throws OCKException {
+        //final String methodName = "reset ";
+        //OCKDebug.Msg(debPrefix, methodName,  "digestId =" + this.digestId);
+
+        if (this.digestId == 0) {
+            return;
+        }
+
+        if (!validId(this.digestId)) {
+            throw new OCKException(badIdMsg);
+        }
+        if (this.needsReinit) {
+            NativeInterface.DIGEST_reset(this.ockContext.getId(), this.digestId);
+        }
+        this.needsReinit = false;
+    }
+
     private synchronized void obtainDigestLength() throws OCKException {
         // Leave this duplicate check in here. If two threads are both trying
         // to getDigestLength at the same time, we only want to call the
         // native code one time.
 
         // if SHA* algorithms
-        if (this.resources.algIndx >= 0 && this.resources.algIndx < numShaAlgos) {
-            this.digestLength = digestLengths[this.resources.algIndx];
+        if (this.algIndx >= 0 && this.algIndx < numShaAlgos) {
+            this.digestLength = digestLengths[this.algIndx];
         } else {
             if (this.digestLength == 0) {
-                if (!validId(this.resources.digestId)) {
+                if (!validId(this.digestId)) {
                     throw new OCKException(badIdMsg);
                 }
-                this.digestLength = NativeInterface.DIGEST_size(this.resources.ockContext.getId(),
-                        this.resources.digestId);
+                this.digestLength = NativeInterface.DIGEST_size(this.ockContext.getId(),
+                        this.digestId);
             }
         }
     }
@@ -362,29 +346,15 @@ public final class Digest implements Cloneable, CleanableObject {
         return (id != 0L);
     }
 
-    /**
-     * Clones a given Digest.
-     */
-    public synchronized Object clone() throws CloneNotSupportedException {
-        // Create new Digest instance and copy all relevant fields into the copy.
-        // Clones do not make use of the cache so always set the value of
-        // contextFromQueue to false to ensure that the context is later freed
-        // correctly.
-        Digest copy = new Digest();
-        copy.digestLength = this.digestLength;
-        copy.resources = new Resources();
-        copy.resources.algIndx = this.resources.algIndx;
-        copy.digestAlgo = new String(this.digestAlgo);
-        copy.resources.needsReinit = this.resources.needsReinit;
-        copy.resources.ockContext = this.resources.ockContext;
-        copy.resources.contextFromQueue = false;
-
-        // Allocate a new context for the digestId and copy all state information from our
-        // original context into the copy.
+    @Override
+    synchronized public Object clone() throws CloneNotSupportedException {
+        Digest copy = (Digest) super.clone();
+        
+        copy.contextFromQueue = false;
         try {
-            copy.resources.digestId = NativeInterface.DIGEST_copy(
-                this.resources.ockContext.getId(), getId());
-            if (copy.resources.digestId == 0) {
+            copy.digestId = NativeInterface.DIGEST_copy(
+                this.ockContext.getId(), getId());
+            if (copy.digestId == 0) {
                 throw new CloneNotSupportedException("Copy of native digest context failed.");
             }
         } catch (OCKException e) {
@@ -395,7 +365,7 @@ public final class Digest implements Cloneable, CleanableObject {
             throw new CloneNotSupportedException(stackTrace);
         }
 
-        OpenJCEPlusProvider.registerCleanableC(copy, cleanOCKResources(copy.digestId, copy.algIndx,
+        OpenJCEPlusProvider.registerCleanableB(copy, cleanOCKResources(copy.digestId, copy.algIndx,
                 copy.contextFromQueue, copy.needsReinit, copy.ockContext));
         return copy;
     }
