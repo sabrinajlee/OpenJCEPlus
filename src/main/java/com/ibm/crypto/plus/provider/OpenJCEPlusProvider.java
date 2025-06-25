@@ -11,6 +11,7 @@ package com.ibm.crypto.plus.provider;
 import java.lang.ref.Cleaner;
 import java.lang.ref.WeakReference;
 import java.security.ProviderException;
+import java.util.ArrayList;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -29,7 +30,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     private static final String JAVA_VER = System.getProperty("java.specification.version");
 
-    private static final int MAX_CLEANABLES = 100; // not sure what to set this to yet
+    private static final int MAX_CLEANABLES = 10000000; // not sure what to set this to yet
 
     static final String DEBUG_VALUE = "jceplus";
 
@@ -41,6 +42,10 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     private static final Cleaner cleaner = Cleaner.create(new CleanerThreadFactory());
 
     private static final AtomicInteger counter = new AtomicInteger(0);
+
+    private static final ArrayList<Cleaner.Cleanable> cleanablesList = new ArrayList<Cleaner.Cleanable>().ensureCapacity(MAX_CLEANABLES);;
+
+
 
 
 
@@ -71,11 +76,29 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     }
 
     public static void registerCleanableB(CleanableObject owner, Runnable cleanAction) {
+        Cleaner.Cleanable newCleanable = cleaner.register(owner, cleanAction);
+        cleanablesList.add(newCleanable);
         int currentCount = counter.incrementAndGet();
+
         if (currentCount % 1000000 == 0){
             System.out.println("CURRENT COUNT IS: "+ currentCount);
         }
-        cleaner.register(owner, cleanAction);
+        if (currentCount >= MAX_CLEANABLES){
+            if (clearListItems()){
+                System.out.println("SUCCESSFULLY CLEANED " + MAX_CLEANABLES + " ITEMS.");
+            }
+            else { System.out.println("CLEAN LIST WAS NOT COMPLETED"); }
+
+        }
+    }
+
+    private static boolean clearListItems(){
+        for (int i = 0; i < cleanablesList.size(); i++) {
+            cleanablesList[i].clean();
+            cleanablesList.remove(i);
+        }
+        if (cleanablesList.isEmpty()){ return true; }
+        else { return false; }
     }
 
     public static void registerCleanable(CleanableObject owner) {
