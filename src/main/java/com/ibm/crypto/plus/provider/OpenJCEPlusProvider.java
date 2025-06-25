@@ -12,6 +12,7 @@ import java.lang.ref.Cleaner;
 import java.lang.ref.WeakReference;
 import java.security.ProviderException;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.ibm.crypto.plus.provider.ock.OCKContext;
 
@@ -28,6 +29,8 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     private static final String JAVA_VER = System.getProperty("java.specification.version");
 
+    private static final int MAX_CLEANABLES = 100; // not sure what to set this to yet
+
     static final String DEBUG_VALUE = "jceplus";
 
     //    private static boolean verifiedSelfIntegrity = false;
@@ -36,6 +39,11 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 //    private static final Cleaner cleaner = Cleaner.create();
 
     private static final Cleaner cleaner = Cleaner.create(new CleanerThreadFactory());
+
+    private static final AtomicInteger counter = new AtomicInteger(0);
+
+
+
 
     OpenJCEPlusProvider(String name, String info) {
         super(name, PROVIDER_VER, info);
@@ -55,7 +63,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
             public void run() {
                 ownerRef.get().cleanup();
             }
-        });
+         });
     }
 
     public static void registerCleanableB(Object owner, Runnable cleanAction) {
@@ -63,6 +71,10 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     }
 
     public static void registerCleanableB(CleanableObject owner, Runnable cleanAction) {
+        int currentCount = counter.incrementAndGet();
+        if (currentCount % 1000000 == 0){
+            System.out.println("CURRENT COUNT IS: "+ currentCount);
+        }
         cleaner.register(owner, cleanAction);
     }
 
@@ -107,7 +119,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     String getJavaVersionStr() {
         return JAVA_VER;
     }
-
+    
     abstract ProviderException providerException(String message, Throwable ockException);
 
     abstract void setOCKExceptionCause(Exception exception, Throwable ockException);
@@ -120,6 +132,8 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
             thread.setPriority(Thread.MAX_PRIORITY);
             return thread;
         }
-        
+
     }
 }
+      
+
