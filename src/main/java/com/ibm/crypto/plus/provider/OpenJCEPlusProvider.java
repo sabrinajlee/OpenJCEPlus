@@ -99,6 +99,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
             }
         }
         cleanablesList.clear();
+        counter.set(0);
     }
 
     public static void registerCleanable(CleanableObject owner) {
