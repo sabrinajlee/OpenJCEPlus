@@ -43,7 +43,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     private static final AtomicInteger counter = new AtomicInteger(0);
 
-    private static final ArrayList<Cleaner.Cleanable> cleanablesList = new ArrayList<Cleaner.Cleanable>().ensureCapacity(MAX_CLEANABLES);;
+    private static final ArrayList<Cleaner.Cleanable> cleanablesList = new ArrayList<Cleaner.Cleanable>();
 
 
 
@@ -94,7 +94,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     private static boolean clearListItems(){
         for (int i = 0; i < cleanablesList.size(); i++) {
-            cleanablesList[i].clean();
+            cleanablesList.get(i).clean();
             cleanablesList.remove(i);
         }
         if (cleanablesList.isEmpty()){ return true; }
