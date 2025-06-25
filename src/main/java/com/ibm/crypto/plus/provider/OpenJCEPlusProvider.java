@@ -84,25 +84,22 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
             System.out.println("CURRENT COUNT IS: "+ currentCount);
         }
         if (currentCount >= MAX_CLEANABLES){
-            if (clearListItems()){
-                System.out.println("SUCCESSFULLY CLEANED " + MAX_CLEANABLES + " ITEMS.");
-            }
-            else { System.out.println("CLEAN LIST WAS NOT COMPLETED"); }
+            clearListItems();
+            System.out.println("SUCCESSFULLY CLEANED " + MAX_CLEANABLES + " ITEMS.");
 
         }
     }
 
-    private static boolean clearListItems(){
+    private static void clearListItems(){
         System.out.println("Attempting to clean " + MAX_CLEANABLES + " items...");
         for (int i = 0; i < cleanablesList.size(); i++) {
             cleanablesList.get(i).clean();
-            cleanablesList.remove(i);
             if (cleanablesList.size() % 50000 == 0){
-                System.out.println("Cleaned and removed 50000 items.");
+                System.out.println("Cleaned 50000 items.");
             }
         }
-        if (cleanablesList.isEmpty()){ return true; }
-        else { return false; }
+        cleanablesList.clear();
+        
     }
 
     public static void registerCleanable(CleanableObject owner) {
