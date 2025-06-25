@@ -30,7 +30,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     private static final String JAVA_VER = System.getProperty("java.specification.version");
 
-    private static final int MAX_CLEANABLES = 10000000; // not sure what to set this to yet
+    private static final int MAX_CLEANABLES = 1000000; // not sure what to set this to yet
 
     static final String DEBUG_VALUE = "jceplus";
 
@@ -91,7 +91,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     }
 
     private static void clearListItems(){
-        System.out.println("Attempting to clean " + MAX_CLEANABLES + " items...");
+        System.out.println("Attempting to clean " + cleanablesList.size() + " items...");
         for (int i = 0; i < cleanablesList.size(); i++) {
             cleanablesList.get(i).clean();
             if (cleanablesList.size() % 50000 == 0){
@@ -99,7 +99,6 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
             }
         }
         cleanablesList.clear();
-        
     }
 
     public static void registerCleanable(CleanableObject owner) {
