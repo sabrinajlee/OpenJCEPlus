@@ -97,7 +97,9 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
         for (int i = 0; i < cleanablesList.size(); i++) {
             cleanablesList.get(i).clean();
             cleanablesList.remove(i);
-            System.out.println("Cleaned and removed an item.");
+            if (cleanablesList.size() % 50000 == 0){
+                System.out.println("Cleaned and removed 50000 items.");
+            }
         }
         if (cleanablesList.isEmpty()){ return true; }
         else { return false; }
