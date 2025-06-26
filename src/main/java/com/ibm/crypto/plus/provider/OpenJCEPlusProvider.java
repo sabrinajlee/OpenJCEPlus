@@ -99,7 +99,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
         int queueSize = cleanablesQueue.size();
         System.out.println("Attempting to clean " + MAX_CLEANABLES + " items...\n**************************\n");
         for (int i = 0; i < MAX_CLEANABLES; i++) {
-            Cleaner.Cleanables curr = cleanablesQueue.poll();
+            Cleaner.Cleanable curr = cleanablesQueue.poll();
             if (curr != null) { 
                 curr.clean(); 
                 counter.decrementAndGet();
@@ -107,9 +107,9 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
             else { 
                 System.out.println("*****SUCCESSFULLY CLEANED " + i + " ITEMS.******");
                 return; 
-            }
-        System.out.println("*********\nSUCCESSFULLY CLEANED " + MAX_CLEANABLES + " ITEMS.\n*****************");
-        }        
+            } 
+        }    
+    	System.out.println("*********\nSUCCESSFULLY CLEANED " + MAX_CLEANABLES + " ITEMS.\n*****************");	
     }
 
     public static void registerCleanable(CleanableObject owner) {
