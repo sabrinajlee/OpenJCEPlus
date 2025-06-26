@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.bouncycastle.its.ITSPublicEncryptionKey.symmAlgorithm;
+
 import com.ibm.crypto.plus.provider.ock.OCKContext;
 
 // Internal interface for OpenJCEPlus and OpenJCEPlus implementation classes.
@@ -77,7 +79,11 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     public static void registerCleanableB(CleanableObject owner, Runnable cleanAction) {
         Cleaner.Cleanable newCleanable = cleaner.register(owner, cleanAction);
-        cleanablesList.add(newCleanable);
+
+    }
+
+    private static synchronized void addCleanableToList(Cleaner.Cleanable cleanable){
+        cleanablesList.add(cleanable);
         int currentCount = counter.incrementAndGet();
 
         if (currentCount % 1000000 == 0){
@@ -89,7 +95,6 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
         }
     }
-
     private static synchronized void clearListItems(){
         System.out.println("Attempting to clean " + cleanablesList.size() + " items...\n**************************\n");
         for (int i = 0; i < cleanablesList.size(); i++) {
