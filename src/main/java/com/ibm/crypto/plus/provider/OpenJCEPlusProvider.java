@@ -16,7 +16,6 @@ import java.util.Queue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.bouncycastle.its.ITSPublicEncryptionKey.symmAlgorithm;
 
 import com.ibm.crypto.plus.provider.ock.OCKContext;
 
@@ -83,7 +82,6 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
         addCleanableToList(newCleanable);
         if (counter.get() >= MAX_CLEANABLES){
             clearListItems();
-            System.out.println("*********\nSUCCESSFULLY CLEANED " + MAX_CLEANABLES + " ITEMS.\n*****************");
         }
 
     }
@@ -103,8 +101,11 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
         for (int i = 0; i < MAX_CLEANABLES; i++) {
             Cleaner.Cleanables curr = cleanablesQueue.poll();
             if (curr != null) { curr.clean(); }
-            else { break; }
+            else { 
+                System.out.println("*****SUCCESSFULLY CLEANED " + i + " ITEMS.******");
+                break; }
             counter.decrementAndGet();
+        System.out.println("*********\nSUCCESSFULLY CLEANED " + MAX_CLEANABLES + " ITEMS.\n*****************");
         }        
     }
 
