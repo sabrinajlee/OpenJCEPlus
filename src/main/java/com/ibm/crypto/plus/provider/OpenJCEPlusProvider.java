@@ -94,9 +94,10 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
         System.out.println("Attempting to clean " + cleanablesList.size() + " items...\n**************************\n");
         for (int i = 0; i < cleanablesList.size(); i++) {
             cleanablesList.get(i).clean();
-            cleanablesList.remove(i);
+            //cleanablesList.remove(i);
             counter.decrementAndGet();
         }
+        cleanablesList.clear();
         
     }
 
