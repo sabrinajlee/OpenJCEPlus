@@ -97,7 +97,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
             //cleanablesList.remove(i);
             counter.decrementAndGet();
         }
-        cleanablesList.clear();
+        //cleanablesList.clear();
         
     }
 
