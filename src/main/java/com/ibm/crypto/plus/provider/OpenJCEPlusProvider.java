@@ -11,7 +11,11 @@ package com.ibm.crypto.plus.provider;
 import java.lang.ref.Cleaner;
 import java.lang.ref.WeakReference;
 import java.security.ProviderException;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.Queue;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
+
 
 import com.ibm.crypto.plus.provider.ock.OCKContext;
 
@@ -28,6 +32,8 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     private static final String JAVA_VER = System.getProperty("java.specification.version");
 
+    private static final int MAX_CLEANABLES = 10000000; // not sure what to set this to yet
+
     static final String DEBUG_VALUE = "jceplus";
 
     //    private static boolean verifiedSelfIntegrity = false;
@@ -36,6 +42,15 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 //    private static final Cleaner cleaner = Cleaner.create();
 
     private static final Cleaner cleaner = Cleaner.create(new CleanerThreadFactory());
+
+    private static final AtomicInteger counter = new AtomicInteger(0);
+
+    private static final Queue<Cleaner.Cleanable> cleanablesQueue = new ConcurrentLinkedQueue<>();
+
+
+
+
+
 
     OpenJCEPlusProvider(String name, String info) {
         super(name, PROVIDER_VER, info);
@@ -55,7 +70,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
             public void run() {
                 ownerRef.get().cleanup();
             }
-        });
+         });
     }
 
     public static void registerCleanableB(Object owner, Runnable cleanAction) {
@@ -63,7 +78,38 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     }
 
     public static void registerCleanableB(CleanableObject owner, Runnable cleanAction) {
-        cleaner.register(owner, cleanAction);
+        Cleaner.Cleanable newCleanable = cleaner.register(owner, cleanAction);
+        addCleanableToList(newCleanable);
+        if (counter.get() >= MAX_CLEANABLES){
+            clearListItems();
+        }
+
+    }
+
+    private static void addCleanableToList(Cleaner.Cleanable cleanable){
+        cleanablesQueue.add(cleanable);
+        int currentCount = counter.incrementAndGet();
+
+        if (currentCount % 1000000 == 0){
+            System.out.println("CURRENT COUNT IS: "+ currentCount);
+        }
+    }
+
+    private static void clearListItems(){
+        int queueSize = cleanablesQueue.size();
+        System.out.println("Attempting to clean " + MAX_CLEANABLES + " items...\n**************************\n");
+        for (int i = 0; i < MAX_CLEANABLES; i++) {
+            Cleaner.Cleanable curr = cleanablesQueue.poll();
+            if (curr != null) { 
+                curr.clean(); 
+                counter.decrementAndGet();
+            }
+            else { 
+                System.out.println("*****SUCCESSFULLY CLEANED " + i + " ITEMS.******");
+                return; 
+            } 
+        }    
+    	System.out.println("*********\nSUCCESSFULLY CLEANED " + MAX_CLEANABLES + " ITEMS.\n*****************");	
     }
 
     public static void registerCleanable(CleanableObject owner) {
@@ -107,7 +153,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     String getJavaVersionStr() {
         return JAVA_VER;
     }
-
+    
     abstract ProviderException providerException(String message, Throwable ockException);
 
     abstract void setOCKExceptionCause(Exception exception, Throwable ockException);
@@ -120,6 +166,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
             thread.setPriority(Thread.MAX_PRIORITY);
             return thread;
         }
-        
+
     }
 }
+      
