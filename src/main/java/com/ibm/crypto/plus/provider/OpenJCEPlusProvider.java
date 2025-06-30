@@ -32,7 +32,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     private static final String JAVA_VER = System.getProperty("java.specification.version");
 
-    private static final int MAX_CLEANABLES = 1000000; // not sure what to set this to yet
+    private static final int MAX_CLEANABLES = 10000000; // not sure what to set this to yet
 
     static final String DEBUG_VALUE = "jceplus";
 
