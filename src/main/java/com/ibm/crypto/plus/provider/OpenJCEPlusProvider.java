@@ -15,7 +15,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.Queue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
-
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.ibm.crypto.plus.provider.ock.OCKContext;
 
@@ -32,7 +34,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     private static final String JAVA_VER = System.getProperty("java.specification.version");
 
-    private static final int MAX_CLEANABLES = 10000000; // not sure what to set this to yet
+    private static final float MAX_MEMORY = 0.6; 
 
     static final String DEBUG_VALUE = "jceplus";
 
@@ -45,11 +47,11 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     private static final AtomicInteger counter = new AtomicInteger(0);
 
-    private static final Queue<Cleaner.Cleanable> cleanablesQueue = new ConcurrentLinkedQueue<>();
+    private static final ConcurrentHashMap<Cleaner.Cleanable, WeakReference> map = new ConcurrentHashMap<>();
+    
+    private static  Runtime rt = Runtime.getRuntime();
 
-
-
-
+    private static final ReentrantLock lock = new ReentrantLock();
 
 
     OpenJCEPlusProvider(String name, String info) {
@@ -79,37 +81,59 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     public static void registerCleanableB(CleanableObject owner, Runnable cleanAction) {
         Cleaner.Cleanable newCleanable = cleaner.register(owner, cleanAction);
-        addCleanableToList(newCleanable);
-        if (counter.get() >= MAX_CLEANABLES){
-            clearListItems();
-        }
+        addCleanableToMap(newCleanable, owner);
+
+        // addCleanableToList(newCleanable);
+        // if (counter.get() >= MAX_CLEANABLES){
+        //     clearListItems();
+        // }
 
     }
 
-    private static void addCleanableToList(Cleaner.Cleanable cleanable){
-        cleanablesQueue.add(cleanable);
-        int currentCount = counter.incrementAndGet();
+    // private static void addCleanableToList(Cleaner.Cleanable cleanable){
+    //     cleanablesQueue.add(cleanable);
+    //     int currentCount = counter.incrementAndGet();
 
-        if (currentCount % 1000000 == 0){
-            System.out.println("CURRENT COUNT IS: "+ currentCount);
+    //     if (currentCount % 1000000 == 0){
+    //         System.out.println("CURRENT COUNT IS: "+ currentCount);
+    //     }
+    // }
+    private static void addCleanableToMap(Cleaner.Cleanable cleanable, CleanableObject owner) {
+        long totalMemory = rt.totalMemory();
+        long freeMemory = rt.freeMemory();
+        long usedMemory = totalMemory - freeMemory;
+        WeakReference<CleanableObject> reference = new WeakReference<>(owner);
+
+        map.put(reference,cleanable);
+        
+        if (map.size() % 1000000 == 0){
+            System.out.println("THERE ARE " + map.size() + "ITEMS WAITING TO BE CLEANED");
+        }
+
+        if (usedMemory >= totalMemory * MAX_MEMORY) {
+            System.out.println("***** USED " + usedMemory / totalMemory + "% OF MEMORY, CLEANING MAP... *******");
+            clearMapItems();
         }
     }
 
-    private static void clearListItems(){
-        int queueSize = cleanablesQueue.size();
-        System.out.println("Attempting to clean " + MAX_CLEANABLES + " items...\n**************************\n");
-        for (int i = 0; i < MAX_CLEANABLES; i++) {
-            Cleaner.Cleanable curr = cleanablesQueue.poll();
-            if (curr != null) { 
-                curr.clean(); 
-                counter.decrementAndGet();
+    private static void clearMapItems() {
+        if (lock.tryLock()){
+            try {
+                for (Map.Entry<WeakReference<CleanableObject>, Cleaner.Cleanable> entry : map.entrySet()){
+                    WeakReference<CleanableObject> owner = entry.getKey();
+                    if (owner.isEnqueued()){
+                        map.remove(owner).clean();
+                    }
+                    else { continue; }
+                }
             }
-            else { 
-                System.out.println("*****SUCCESSFULLY CLEANED " + i + " ITEMS.******");
-                return; 
-            } 
-        }    
-    	System.out.println("*********\nSUCCESSFULLY CLEANED " + MAX_CLEANABLES + " ITEMS.\n*****************");	
+            finally {
+                lock.unlock();
+            }
+        }
+        else {
+            System.out.println("Cleanup already in progress by another thread. Skipping...");
+        }
     }
 
     public static void registerCleanable(CleanableObject owner) {
