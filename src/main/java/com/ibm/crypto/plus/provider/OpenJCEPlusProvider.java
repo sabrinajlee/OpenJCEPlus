@@ -104,7 +104,6 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 	}
 
         if (usedMemory >= (double) totalMemory * MAX_MEMORY) {
-//            System.out.println("***** USED " + (double) usedMemory / totalMemory * 100 + "% OF MEMORY, CLEANING MAP... *******");
             clearMapItems();
         }
     }
@@ -112,16 +111,15 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     private static void clearMapItems() {
         if (lock.tryLock()){
             try {
-                for (Map.Entry<PhantomReference<CleanableObject>, Cleaner.Cleanable> entry : map.entrySet()){
-                    PhantomReference<CleanableObject> ownerRef = entry.getKey();
-
-                    if (ownerRef.isEnqueued()){
-                        map.remove(ownerRef).clean();
+                PhantomReference<CleanableObject> ownerRef = (PhantomReference<CleanableObject>) queue.poll();
+                while (ownerRef != null){
+                    Cleaner.Cleanable cleanable = map.get(ownerRef);
+                    if (cleanable) {
+                        cleanable.clean();
                         System.out.println("deleted 1");
                     }
-                    else { 
-                        System.out.print(" X ");
-                        continue; 
+                    else {
+                        System.out.println("Something went wrong: No cleanable mapped to this reference");
                     }
                 }
             }
