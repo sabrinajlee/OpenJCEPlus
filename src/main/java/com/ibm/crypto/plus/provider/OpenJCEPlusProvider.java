@@ -9,6 +9,7 @@
 package com.ibm.crypto.plus.provider;
 
 import java.lang.ref.Cleaner;
+import java.lang.ref.WeakReference;
 import java.lang.ref.PhantomReference;
 import java.security.ProviderException;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -66,7 +67,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
         return doSelfVerification(c);
     }
 
-    public static void registerCleanableC(Object owner, PhantomReference<CleanableObject> ownerRef) {
+    public static void registerCleanableC(Object owner, WeakReference<CleanableObject> ownerRef) {
         cleaner.register(owner, new Runnable() {
             @Override
             public void run() {
