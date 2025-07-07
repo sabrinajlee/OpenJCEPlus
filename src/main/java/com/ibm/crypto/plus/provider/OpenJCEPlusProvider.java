@@ -100,10 +100,11 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
         if (map.size() % 100000 == 0){
             System.out.println("THERE ARE " + map.size() + " ITEMS WAITING TO BE CLEANED");
-        }
+            System.out.println("***** USED " + (double) usedMemory / totalMemory * 100 + "% OF MEMORY *******");
+	}
 
         if (usedMemory >= (double) totalMemory * MAX_MEMORY) {
-            System.out.println("***** USED " + (double) usedMemory / totalMemory * 100 + "% OF MEMORY, CLEANING MAP... *******");
+//            System.out.println("***** USED " + (double) usedMemory / totalMemory * 100 + "% OF MEMORY, CLEANING MAP... *******");
             clearMapItems();
         }
     }
@@ -119,7 +120,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
                         System.out.println("deleted 1");
                     }
                     else { 
-                        System.out.println("not this one!");
+                        System.out.print(" X ");
                         continue; 
                     }
                 }
@@ -129,7 +130,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
             }
         }
         else {
-            System.out.println("Skipping...");
+            System.out.print("Skip!");
         }
     }
 
