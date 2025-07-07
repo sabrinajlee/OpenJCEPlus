@@ -114,7 +114,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
                 PhantomReference<CleanableObject> ownerRef = (PhantomReference<CleanableObject>) queue.poll();
                 while (ownerRef != null){
                     Cleaner.Cleanable cleanable = map.get(ownerRef);
-                    if (cleanable) {
+                    if (cleanable != null) {
                         cleanable.clean();
                         System.out.println("deleted 1");
                     }
