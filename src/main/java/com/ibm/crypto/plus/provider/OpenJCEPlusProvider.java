@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
+import java.lang.ref.ReferenceQueue;
 
 import com.ibm.crypto.plus.provider.ock.OCKContext;
 
@@ -54,6 +55,8 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     private static final ReentrantLock lock = new ReentrantLock();
 
+    private static final ReferenceQueue<CleanableObject> queue = new ReferenceQueue<>();
+
 
     OpenJCEPlusProvider(String name, String info) {
         super(name, PROVIDER_VER, info);
@@ -83,29 +86,15 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     public static void registerCleanableB(CleanableObject owner, Runnable cleanAction) {
         Cleaner.Cleanable newCleanable = cleaner.register(owner, cleanAction);
         addCleanableToMap(newCleanable, owner);
-
-        // addCleanableToList(newCleanable);
-        // if (counter.get() >= MAX_CLEANABLES){
-        //     clearListItems();
-        // }
-
     }
 
-    // private static void addCleanableToList(Cleaner.Cleanable cleanable){
-    //     cleanablesQueue.add(cleanable);
-    //     int currentCount = counter.incrementAndGet();
-
-    //     if (currentCount % 1000000 == 0){
-    //         System.out.println("CURRENT COUNT IS: "+ currentCount);
-    //     }
-    // }
     private static void addCleanableToMap(Cleaner.Cleanable cleanable, CleanableObject owner) {
         long totalMemory = rt.totalMemory();
         long freeMemory = rt.freeMemory();
         long usedMemory = totalMemory - freeMemory;
-        PhantomReference<CleanableObject> reference = new PhantomReference<>(owner);
+        PhantomReference<CleanableObject> ownerRef = new PhantomReference<>(owner, queue);
 
-        map.put(reference,cleanable);
+        map.put(ownerRef,cleanable);
         
 //	System.out.println("\n\n\nTOTAL MEMORY: " + totalMemory + "\n FREE MEMORY: " + freeMemory + "\n\n\n");
 
@@ -123,9 +112,10 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
         if (lock.tryLock()){
             try {
                 for (Map.Entry<PhantomReference<CleanableObject>, Cleaner.Cleanable> entry : map.entrySet()){
-                    PhantomReference<CleanableObject> owner = entry.getKey();
-                    if (owner.isEnqueued()){
-                        map.remove(owner).clean();
+                    PhantomReference<CleanableObject> ownerRef = entry.getKey();
+
+                    if (ownerRef.isEnqueued()){
+                        map.remove(ownerRef).clean();
                         System.out.println("deleted 1");
                     }
                     else { 
