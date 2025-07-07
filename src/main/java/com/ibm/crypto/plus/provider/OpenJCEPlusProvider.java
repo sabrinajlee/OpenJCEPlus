@@ -109,7 +109,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 //	System.out.println("\n\n\nTOTAL MEMORY: " + totalMemory + "\n FREE MEMORY: " + freeMemory + "\n\n\n");
 
         if (map.size() % 100000 == 0){
-            System.out.println("THERE ARE " + map.size() + "ITEMS WAITING TO BE CLEANED");
+            System.out.println("THERE ARE " + map.size() + " ITEMS WAITING TO BE CLEANED");
         }
 
         if (usedMemory >= (double) totalMemory * MAX_MEMORY) {
@@ -125,8 +125,12 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
                     WeakReference<CleanableObject> owner = entry.getKey();
                     if (owner.isEnqueued()){
                         map.remove(owner).clean();
+                        System.out.println("deleted 1");
                     }
-                    else { continue; }
+                    else { 
+                        System.out.println("not this one!");
+                        continue; 
+                    }
                 }
             }
             finally {
@@ -134,7 +138,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
             }
         }
         else {
-            System.out.println("Cleanup already in progress by another thread. Skipping...");
+            System.out.println("Skipping...");
         }
     }
 
