@@ -9,7 +9,7 @@
 package com.ibm.crypto.plus.provider;
 
 import java.lang.ref.Cleaner;
-import java.lang.ref.WeakReference;
+import java.lang.ref.PhantomReference;
 import java.security.ProviderException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.Queue;
@@ -47,7 +47,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     private static final AtomicInteger counter = new AtomicInteger(0);
 
-    private static final ConcurrentHashMap<WeakReference<CleanableObject>, Cleaner.Cleanable> map = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<PhantomReference<CleanableObject>, Cleaner.Cleanable> map = new ConcurrentHashMap<>();
     
     private static  Runtime rt = Runtime.getRuntime();
 
@@ -66,7 +66,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
         return doSelfVerification(c);
     }
 
-    public static void registerCleanableC(Object owner, WeakReference<CleanableObject> ownerRef) {
+    public static void registerCleanableC(Object owner, PhantomReference<CleanableObject> ownerRef) {
         cleaner.register(owner, new Runnable() {
             @Override
             public void run() {
@@ -102,7 +102,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
         long totalMemory = rt.totalMemory();
         long freeMemory = rt.freeMemory();
         long usedMemory = totalMemory - freeMemory;
-        WeakReference<CleanableObject> reference = new WeakReference<>(owner);
+        PhantomReference<CleanableObject> reference = new PhantomReference<>(owner);
 
         map.put(reference,cleanable);
         
@@ -121,8 +121,8 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     private static void clearMapItems() {
         if (lock.tryLock()){
             try {
-                for (Map.Entry<WeakReference<CleanableObject>, Cleaner.Cleanable> entry : map.entrySet()){
-                    WeakReference<CleanableObject> owner = entry.getKey();
+                for (Map.Entry<PhantomReference<CleanableObject>, Cleaner.Cleanable> entry : map.entrySet()){
+                    PhantomReference<CleanableObject> owner = entry.getKey();
                     if (owner.isEnqueued()){
                         map.remove(owner).clean();
                         System.out.println("deleted 1");
