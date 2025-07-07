@@ -34,7 +34,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     private static final String JAVA_VER = System.getProperty("java.specification.version");
 
-    private static final float MAX_MEMORY = 0.6; 
+    private static final double MAX_MEMORY = 0.7; 
 
     static final String DEBUG_VALUE = "jceplus";
 
@@ -47,7 +47,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     private static final AtomicInteger counter = new AtomicInteger(0);
 
-    private static final ConcurrentHashMap<Cleaner.Cleanable, WeakReference> map = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<WeakReference<CleanableObject>, Cleaner.Cleanable> map = new ConcurrentHashMap<>();
     
     private static  Runtime rt = Runtime.getRuntime();
 
@@ -106,12 +106,14 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
         map.put(reference,cleanable);
         
-        if (map.size() % 1000000 == 0){
+//	System.out.println("\n\n\nTOTAL MEMORY: " + totalMemory + "\n FREE MEMORY: " + freeMemory + "\n\n\n");
+
+        if (map.size() % 100000 == 0){
             System.out.println("THERE ARE " + map.size() + "ITEMS WAITING TO BE CLEANED");
         }
 
-        if (usedMemory >= totalMemory * MAX_MEMORY) {
-            System.out.println("***** USED " + usedMemory / totalMemory + "% OF MEMORY, CLEANING MAP... *******");
+        if (usedMemory >= (double) totalMemory * MAX_MEMORY) {
+            System.out.println("***** USED " + (double) usedMemory / totalMemory * 100 + "% OF MEMORY, CLEANING MAP... *******");
             clearMapItems();
         }
     }
