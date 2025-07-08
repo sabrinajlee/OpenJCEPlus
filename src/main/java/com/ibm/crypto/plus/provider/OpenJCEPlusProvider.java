@@ -120,6 +120,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
             else {
                 System.out.println("Something went wrong: No cleanable mapped to this reference");
             }
+            ownerRef = (PhantomReference<CleanableObject>) queue.poll();
         }
     }
 
