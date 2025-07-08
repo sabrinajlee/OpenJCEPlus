@@ -109,26 +109,17 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     }
 
     private static void clearMapItems() {
-        if (lock.tryLock()){
-            try {
-                PhantomReference<CleanableObject> ownerRef = (PhantomReference<CleanableObject>) queue.poll();
-                while (ownerRef != null){
-                    Cleaner.Cleanable cleanable = map.get(ownerRef);
-                    if (cleanable != null) {
-                        cleanable.clean();
-                        System.out.println("deleted 1");
-                    }
-                    else {
-                        System.out.println("Something went wrong: No cleanable mapped to this reference");
-                    }
-                }
+        PhantomReference<CleanableObject> ownerRef = (PhantomReference<CleanableObject>) queue.poll();
+        while (ownerRef != null){
+            Cleaner.Cleanable cleanable = map.get(ownerRef);
+            if (cleanable) {
+                map.remove(ownerRef, cleanable);
+                cleanable.clean();
+                System.out.println("deleted 1");
             }
-            finally {
-                lock.unlock();
+            else {
+                System.out.println("Something went wrong: No cleanable mapped to this reference");
             }
-        }
-        else {
-            System.out.print("Skip!");
         }
     }
 
