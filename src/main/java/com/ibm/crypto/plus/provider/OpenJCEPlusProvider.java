@@ -36,7 +36,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     private static final String JAVA_VER = System.getProperty("java.specification.version");
 
-    private static final double MAX_MEMORY = 0.7; 
+    private static final double MAX_MEMORY = 0.85; 
 
     static final String DEBUG_VALUE = "jceplus";
 
@@ -109,8 +109,8 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     }
 
     private static void clearMapItems() {
-        if (lock.tryLock()){
-            try {
+//        if (lock.tryLock()){
+//            try {
                 PhantomReference<CleanableObject> ownerRef = (PhantomReference<CleanableObject>) queue.poll();
                 while (ownerRef != null){
                     Cleaner.Cleanable cleanable = map.get(ownerRef);
@@ -124,14 +124,14 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
                     }
                     ownerRef = (PhantomReference<CleanableObject>) queue.poll();
                 }
-            }
-            finally {
-                lock.unlock();
-            }
-        }
-        else {
-            System.out.print("Skip!");
-        }
+//            }
+//            finally {
+//                lock.unlock();
+//            }
+//        }
+//        else {
+           // System.out.print("Skip!");
+//        }
     }
 
     public static void registerCleanable(CleanableObject owner) {
