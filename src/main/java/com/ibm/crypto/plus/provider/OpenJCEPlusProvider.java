@@ -41,8 +41,25 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     private static final double CUSTOM_MAX_MEMORY;
 
     static {
+	    double tempMaxMem = DEFAULT_MAX_MEMORY;
 
-	   double tempMaxMem = DEFAULT_MAX_MEMORY;
+        String newMaxMem = System.getProperty("my.maxMemory");
+
+        if (newMaxMem != null){
+            try {
+                double parsedValue = Double.parseDouble(newMaxMem);
+
+                if (parsedValue < 1 && parsedValue > 0){
+                    tempMaxMem = parsedValue;
+                }
+                else {
+                    System.out.println("Warning: Max memory must be set to a double between 0 and 1, default 0.6.");
+                }
+            }
+            catch (NumberFormatException e) {
+                System.out.println("Warning: Max memory must be set to a double.");
+            }
+        }
 
 
 
