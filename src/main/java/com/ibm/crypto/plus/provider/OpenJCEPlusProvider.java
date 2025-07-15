@@ -36,7 +36,16 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     private static final String JAVA_VER = System.getProperty("java.specification.version");
 
-    private static final double MAX_MEMORY = 0.85; 
+    private static final double DEFAULT_MAX_MEMORY = 0.6;
+
+    private static final double CUSTOM_MAX_MEMORY;
+
+    static {
+
+	   double tempMaxMem = DEFAULT_MAX_MEMORY;
+
+
+
 
     static final String DEBUG_VALUE = "jceplus";
 
@@ -107,6 +116,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
             clearMapItems();
         }
     }
+
 
     private static void clearMapItems() {
 //        if (lock.tryLock()){
