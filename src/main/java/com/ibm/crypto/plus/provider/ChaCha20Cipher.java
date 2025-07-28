@@ -368,7 +368,7 @@ public final class ChaCha20Cipher extends CipherSpi implements ChaCha20Constants
 
     // Reset class variables.
     private void resetVars() {
-        this.initialized = (!this.encrypting); // force re-initialization only when encrypting
+        this.initialized = false; // force re-initialization only when encrypting
     }
 
     private byte[] generateRandomNonce(SecureRandom random) {
