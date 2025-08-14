@@ -41,7 +41,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     private static final double CUSTOM_MAX_MEMORY;
 
     static {
-	    double tempMaxMem = DEFAULT_MAX_MEMORY;
+	double tempMaxMem = DEFAULT_MAX_MEMORY;
 
         String newMaxMem = System.getProperty("my.maxMemory");
 
@@ -60,7 +60,8 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
                 System.out.println("Warning: Max memory must be set to a double.");
             }
         }
-
+	CUSTOM_MAX_MEMORY = tempMaxMem;
+    }
 
 
 
@@ -129,7 +130,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
             System.out.println("***** USED " + (double) usedMemory / totalMemory * 100 + "% OF MEMORY *******");
 	}
 
-        if (usedMemory >= (double) totalMemory * MAX_MEMORY) {
+        if (usedMemory >= (double) totalMemory * CUSTOM_MAX_MEMORY) {
             clearMapItems();
         }
     }
