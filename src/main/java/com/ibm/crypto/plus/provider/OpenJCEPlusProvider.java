@@ -145,7 +145,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
                     if (cleanable != null) {
                         map.remove(ownerRef, cleanable);
                         cleanable.clean();
-                        System.out.println("deleted 1");
+//                        System.out.println("deleted 1");
                     }
                     else {
                         System.out.println("Something went wrong: No cleanable mapped to this reference");
