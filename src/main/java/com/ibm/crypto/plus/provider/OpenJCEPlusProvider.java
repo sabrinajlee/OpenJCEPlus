@@ -8,17 +8,13 @@
 
 package com.ibm.crypto.plus.provider;
 
+import com.ibm.crypto.plus.provider.ock.OCKContext;
+import java.lang.ref.Cleaner;
+import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
+import java.security.ProviderException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.locks.ReentrantLock;
-import java.lang.ref.Cleaner;
-import java.lang.ref.WeakReference;
-import java.lang.ref.PhantomReference;
-
-import com.ibm.crypto.plus.provider.ock.OCKContext;
-import java.security.ProviderException;
-
 
 // Internal interface for OpenJCEPlus and OpenJCEPlus implementation classes.
 // Implemented as an abstract class rather than an interface so that 
