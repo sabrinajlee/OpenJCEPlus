@@ -8,8 +8,17 @@
 
 package com.ibm.crypto.plus.provider;
 
+import java.lang.ref.ReferenceQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.locks.ReentrantLock;
+import java.lang.ref.Cleaner;
+import java.lang.ref.WeakReference;
+import java.lang.ref.PhantomReference;
+
 import com.ibm.crypto.plus.provider.ock.OCKContext;
 import java.security.ProviderException;
+
 
 // Internal interface for OpenJCEPlus and OpenJCEPlus implementation classes.
 // Implemented as an abstract class rather than an interface so that 
@@ -31,6 +40,42 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     //    private static boolean verifiedSelfIntegrity = false;
     private static final boolean verifiedSelfIntegrity = true;
 
+    private static final ConcurrentHashMap<PhantomReference<CleanableObject>, Cleaner.Cleanable> map = new ConcurrentHashMap<>();
+    
+    private static  Runtime rt = Runtime.getRuntime();
+
+    private static final ReferenceQueue<CleanableObject> queue = new ReferenceQueue<>();
+
+    private static final Cleaner cleaner = Cleaner.create(new CleanerThreadFactory());
+
+    private static final double DEFAULT_MAX_MEMORY = 0.6;
+
+    private static final double CUSTOM_MAX_MEMORY;
+
+    static {
+        double tempMaxMem = DEFAULT_MAX_MEMORY;
+        String newMaxMem = System.getProperty("my.maxMemory");
+
+        if (newMaxMem != null){
+            try {
+                double parsedValue = Double.parseDouble(newMaxMem);
+
+                if (parsedValue < 1 && parsedValue > 0){
+                    tempMaxMem = parsedValue;
+                }
+                else {
+                    // change this
+                    System.out.println("Warning: Max memory must be set to a double between 0 and 1, default 0.6.");
+                }
+            }
+            catch (NumberFormatException e) {
+                // change this
+                System.out.println("Warning: Max memory must be set to a double.");
+            }
+        }
+        CUSTOM_MAX_MEMORY = tempMaxMem;
+    }
+
     OpenJCEPlusProvider(String name, String info) {
         super(name, PROVIDER_VER, info);
     }
@@ -45,6 +90,39 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     private static final synchronized boolean doSelfVerification(Object c) {
         return true;
+    }
+
+    public static void registerCleanable(CleanableObject owner, Runnable cleanAction) {
+        Cleaner.Cleanable newCleanable = cleaner.register(owner, cleanAction);
+        addCleanableToMap(newCleanable, owner);
+    }
+
+    private static void addCleanableToMap(Cleaner.Cleanable cleanable, CleanableObject owner) {
+        long totalMemory = rt.totalMemory();
+        long usedMemory = totalMemory - rt.freeMemory();
+        PhantomReference<CleanableObject> ownerRef = new PhantomReference<>(owner, queue);
+
+        map.put(ownerRef,cleanable);
+
+        if (usedMemory >= (double) totalMemory * CUSTOM_MAX_MEMORY) {
+            clearMapItems();
+        }
+    }
+
+    private static void clearMapItems() {
+        PhantomReference<CleanableObject> ownerRef = (PhantomReference<CleanableObject>) queue.poll();
+        while (ownerRef != null){
+            Cleaner.Cleanable cleanable = map.get(ownerRef);
+            if (cleanable != null) {
+                map.remove(ownerRef, cleanable);
+                cleanable.clean();
+            }
+            else {
+                // change this
+                System.out.println("Something went wrong: No cleanable mapped to this reference");
+            }
+            ownerRef = (PhantomReference<CleanableObject>) queue.poll();
+        }
     }
 
     // Get OCK context for crypto operations
@@ -79,4 +157,16 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     abstract ProviderException providerException(String message, Throwable ockException);
 
     abstract void setOCKExceptionCause(Exception exception, Throwable ockException);
+
+    private static class CleanerThreadFactory implements ThreadFactory {
+
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread thread = new Thread(r);
+            thread.setPriority(Thread.MAX_PRIORITY);
+            return thread;
+        }
+
+    }
 }
+
