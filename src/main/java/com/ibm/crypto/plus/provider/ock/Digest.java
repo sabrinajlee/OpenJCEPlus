@@ -8,13 +8,13 @@
 
 package com.ibm.crypto.plus.provider.ock;
 
+import com.ibm.crypto.plus.provider.CleanableObject;
+import com.ibm.crypto.plus.provider.OpenJCEPlusProvider;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import com.ibm.crypto.plus.provider.CleanableObject;
-import com.ibm.crypto.plus.provider.OpenJCEPlusProvider;
 
 @SuppressWarnings({"removal", "deprecation"})
 public final class Digest implements Cloneable, CleanableObject {
