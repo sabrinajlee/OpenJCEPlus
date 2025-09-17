@@ -236,9 +236,6 @@ public final class Digest implements Cloneable {
         OpenJCEPlusProvider.registerCleanable(this, cleanAction(this.resources));
     }
 
-    private Digest() {
-    }
-
     static void throwOCKException(int errorCode) throws OCKException {
         //final String methodName = "throwOCKExeption";
         // OCKDebug.Msg(debPrefix, methodName, "throwOCKException errorCode =  " + errorCode);
@@ -364,8 +361,6 @@ public final class Digest implements Cloneable {
         copy.resources.needsReinit = this.resources.needsReinit;
         copy.resources.ockContext = this.resources.ockContext;
         copy.resources.contextFromQueue = false;
-        copy.digestLength = this.digestLength;
-        copy.digestAlgo = new String(this.digestAlgo);
 
         // Allocate a new context for the digestId and copy all state information from our
         // original context into the copy. 
