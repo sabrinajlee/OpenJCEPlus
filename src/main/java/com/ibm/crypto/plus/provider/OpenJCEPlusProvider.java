@@ -34,11 +34,11 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     //    private static boolean verifiedSelfIntegrity = false;
     private static final boolean verifiedSelfIntegrity = true;
 
-    private static final ConcurrentHashMap<PhantomReference<CleanableObject>, Cleaner.Cleanable> map = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<PhantomReference<Object>, Cleaner.Cleanable> map = new ConcurrentHashMap<>();
     
     private static  Runtime rt = Runtime.getRuntime();
 
-    private static final ReferenceQueue<CleanableObject> queue = new ReferenceQueue<>();
+    private static final ReferenceQueue<Object> queue = new ReferenceQueue<>();
 
     private static final Cleaner cleaner = Cleaner.create(new CleanerThreadFactory());
 
@@ -86,15 +86,15 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
         return true;
     }
 
-    public static void registerCleanable(CleanableObject owner, Runnable cleanAction) {
+    public static void registerCleanable(Object owner, Runnable cleanAction) {
         Cleaner.Cleanable newCleanable = cleaner.register(owner, cleanAction);
         addCleanableToMap(newCleanable, owner);
     }
 
-    private static void addCleanableToMap(Cleaner.Cleanable cleanable, CleanableObject owner) {
+    private static void addCleanableToMap(Cleaner.Cleanable cleanable, Object owner) {
         long totalMemory = rt.totalMemory();
         long usedMemory = totalMemory - rt.freeMemory();
-        PhantomReference<CleanableObject> ownerRef = new PhantomReference<>(owner, queue);
+        PhantomReference<Object> ownerRef = new PhantomReference<>(owner, queue);
 
         map.put(ownerRef,cleanable);
 
@@ -104,7 +104,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     }
 
     private static void clearMapItems() {
-        PhantomReference<CleanableObject> ownerRef = (PhantomReference<CleanableObject>) queue.poll();
+        PhantomReference<Object> ownerRef = (PhantomReference<Object>) queue.poll();
         while (ownerRef != null){
             Cleaner.Cleanable cleanable = map.get(ownerRef);
             if (cleanable != null) {
@@ -115,7 +115,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
                 // change this
                 System.out.println("Something went wrong: No cleanable mapped to this reference");
             }
-            ownerRef = (PhantomReference<CleanableObject>) queue.poll();
+            ownerRef = (PhantomReference<Object>) queue.poll();
         }
     }
 
