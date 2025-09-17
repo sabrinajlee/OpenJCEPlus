@@ -357,14 +357,15 @@ public final class Digest implements Cloneable {
         // Clones do not make use of the cache so always set the value of
         // contextFromQueue to false to ensure that the context is later freed
         // correctly.
-        Digest copy = new Digest();
+        Digest copy = (Digest) super.clone();
+
         copy.resources = new Resources();
-        copy.digestLength = this.digestLength;
         copy.resources.algIndx = this.resources.algIndx;
-        copy.digestAlgo = new String(this.digestAlgo);
         copy.resources.needsReinit = this.resources.needsReinit;
         copy.resources.ockContext = this.resources.ockContext;
         copy.resources.contextFromQueue = false;
+        copy.digestLength = this.digestLength;
+        copy.digestAlgo = new String(this.digestAlgo);
 
         // Allocate a new context for the digestId and copy all state information from our
         // original context into the copy. 
