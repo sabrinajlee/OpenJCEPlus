@@ -13,8 +13,8 @@ import java.lang.ref.Cleaner;
 import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
 import java.security.ProviderException;
-import java.util.concurrent.ThreadFactory;
 import java.util.HashMap;
+import java.util.concurrent.ThreadFactory;
 
 // Internal interface for OpenJCEPlus and OpenJCEPlus implementation classes.
 // Implemented as an abstract class rather than an interface so that 
