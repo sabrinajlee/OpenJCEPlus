@@ -89,7 +89,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     }
 
     public static void registerCleanable(CleanableObject owner, Runnable cleanAction) {
-        Cleaner.Cleanable newCleanable = cleaner.register(owner, cleanAction);
+        cleaner.register(owner, cleanAction);
         //addCleanableToMap(newCleanable, owner);
     }
 
