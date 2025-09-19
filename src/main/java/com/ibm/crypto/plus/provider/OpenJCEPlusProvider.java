@@ -90,9 +90,10 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     public static void registerCleanable(CleanableObject owner, Runnable cleanAction) {
         Cleaner.Cleanable newCleanable = cleaner.register(owner, cleanAction);
-        addCleanableToMap(newCleanable, owner);
+        //addCleanableToMap(newCleanable, owner);
     }
 
+/***
     private static void addCleanableToMap(Cleaner.Cleanable cleanable, CleanableObject owner) {
         long totalMemory = rt.totalMemory();
         long usedMemory = totalMemory - rt.freeMemory();
@@ -120,6 +121,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
             ownerRef = (PhantomReference<CleanableObject>) queue.poll();
         }
     }
+***/
 
     // Get OCK context for crypto operations
     //
