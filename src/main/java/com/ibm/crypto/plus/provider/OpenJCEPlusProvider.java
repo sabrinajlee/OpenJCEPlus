@@ -44,24 +44,29 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     private static final Cleaner cleaner = Cleaner.create(new CleanerThreadFactory());
 
-    private static final double DEFAULT_MAX_MEMORY = 0.6;
+    private static final double DEFAULT_MAX_MEMORY = 0.85;
 
     private static final double CUSTOM_MAX_MEMORY;
 
+    private static final boolean DO_MANUAL_CLEANING;
+
     static {
         double tempMaxMem = DEFAULT_MAX_MEMORY;
-        String newMaxMem = System.getProperty("my.maxMemory");
+        String isManCleanSet = System.getProperty("doManClean");
 
-        if (newMaxMem != null){
+        if (isManCleanSet == "true"){
+            DO_MANUAL_CLEANING = true;
             try {
-                double parsedValue = Double.parseDouble(newMaxMem);
-
-                if (parsedValue < 1 && parsedValue > 0){
-                    tempMaxMem = parsedValue;
-                }
-                else {
-                    // change this
-                    System.out.println("Warning: Max memory must be set to a double between 0 and 1, default 0.6.");
+                String newMaxMem = System.getProperty("my.maxMemory");
+                if (newMaxMem != null){
+                    double parsedValue = Double.parseDouble(newMaxMem);
+                    if (parsedValue < 1 && parsedValue > 0){
+                        tempMaxMem = parsedValue;
+                    }
+                    else {
+                        // change this
+                        System.out.println("Warning: Max memory must be set to a double between 0 and 1, default 0.6.");
+                    }
                 }
             }
             catch (NumberFormatException e) {
@@ -69,6 +74,10 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
                 System.out.println("Warning: Max memory must be set to a double.");
             }
         }
+        else {
+            DO_MANUAL_CLEANING = false;
+        }
+        
         CUSTOM_MAX_MEMORY = tempMaxMem;
     }
 
@@ -90,10 +99,12 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     public static void registerCleanable(CleanableObject owner, Runnable cleanAction) {
         Cleaner.Cleanable newCleanable = cleaner.register(owner, cleanAction);
-        addCleanableToMap(newCleanable, owner);
+        if (DO_MANUAL_CLEANING) {
+            manualCleaning(newCleanable, owner);
+        }
     }
 
-    private static void addCleanableToMap(Cleaner.Cleanable cleanable, CleanableObject owner) {
+    private static void manualCleaning(Cleaner.Cleanable cleanable, CleanableObject owner) {
         long totalMemory = rt.totalMemory();
         long usedMemory = totalMemory - rt.freeMemory();
         PhantomReference<CleanableObject> ownerRef = new PhantomReference<>(owner, queue);
