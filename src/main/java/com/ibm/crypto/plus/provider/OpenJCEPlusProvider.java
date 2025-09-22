@@ -76,20 +76,25 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     static {
         // jdk.internal.ref.CleanerImpl java.lang.ref.Cleaner.impl
-        Class<?> cleanerClass = cleaner.getClass();
-        Field[] fields = cleanerClass.getDeclaredFields();
 
-        for (Field field : fields) {
-            Class<?> fieldClass = field.getDeclaringClass();
-            Field[] innerFields = fieldClass.getDeclaredFields();
+        Cleaner cleanerInst = Cleaner.create();
+        Field[] fields = cleanerInst.getClass().getDeclaredFields();
+        Field impl = fields[0];
+        impl.setAccessible(true);
+
+        Object cleanerimplobj = impl.get(cleanerInst);
+        
+        // for (Field field : fields) {
+        //     Type fieldType = field.getGenericType();
+        //     Field[] innerFields = fieldClass.getDeclaredFields();
 
 
-            System.out.println(field.getName());
-            System.out.println(fieldClass);
-            System.out.println("    Inner fields: ");
-            System.out.println("        " + innerFields);
+        //     System.out.println(field.getName());
+        //     System.out.println(fieldClass);
+        //     System.out.println("    Inner fields: ");
+        //     System.out.println("        " + innerFields);
             
-        }
+        // }
 
         
     }
