@@ -54,7 +54,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
         double tempMaxMem = DEFAULT_MAX_MEMORY;
         String isManCleanSet = System.getProperty("doManClean");
 
-        if (isManCleanSet.toLowerCase().equals("true")){
+        if (isManCleanSet != null && isManCleanSet.toLowerCase().equals("true")){
             DO_MANUAL_CLEANING = true;
             try {
                 String newMaxMem = System.getProperty("my.maxMemory");
