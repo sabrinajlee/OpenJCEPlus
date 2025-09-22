@@ -14,6 +14,7 @@ import java.lang.ref.Cleaner;
 import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
 import java.security.ProviderException;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
 
@@ -75,7 +76,8 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     static {
         Class<?> cleanclass = cleaner.getClass();
-        Field fields[] = cleanclass.getDeclaredFields();
+        Field[] fields = cleanclass.getDeclaredFields();
+        List<String> actualFields = getFieldNames(fields);
         for (int i = 0; i < fields.length; i++) {
             System.out.println(fields[i]);
         }
