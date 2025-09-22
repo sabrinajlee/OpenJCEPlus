@@ -54,7 +54,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
         double tempMaxMem = DEFAULT_MAX_MEMORY;
         String isManCleanSet = System.getProperty("doManClean");
 
-        if (isManCleanSet == "true"){
+        if (isManCleanSet.toLowerCase().equals("true")){
             DO_MANUAL_CLEANING = true;
             try {
                 String newMaxMem = System.getProperty("my.maxMemory");
@@ -65,13 +65,13 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
                     }
                     else {
                         // change this
-                        System.out.println("Warning: Max memory must be set to a double between 0 and 1, default 0.6.");
+                        System.out.println("Warning: Max memory must be set to a double between 0 and 1, default 0.85.");
                     }
                 }
             }
             catch (NumberFormatException e) {
                 // change this
-                System.out.println("Warning: Max memory must be set to a double.");
+                System.out.println("Warning: Max memory must be set to a double between 0 and 1, default 0.85.");
             }
         }
         else {
