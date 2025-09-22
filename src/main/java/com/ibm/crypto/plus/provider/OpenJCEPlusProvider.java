@@ -9,6 +9,7 @@
 package com.ibm.crypto.plus.provider;
 
 import com.ibm.crypto.plus.provider.ock.OCKContext;
+import java.lang.reflect.*;
 import java.lang.ref.Cleaner;
 import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
@@ -70,6 +71,14 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
             }
         }
         CUSTOM_MAX_MEMORY = tempMaxMem;
+    }
+
+    static {
+        Class<?> cleanclass = cleaner.getClass();
+        Field fields[] = cleanclass.getDeclaredFields();
+        for (int i = 0; i < fields.length; i++) {
+            System.out.println(fields[i]);
+        }
     }
 
     OpenJCEPlusProvider(String name, String info) {
