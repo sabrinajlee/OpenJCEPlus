@@ -40,7 +40,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     
     private static  Runtime rt = Runtime.getRuntime();
 
-    private static final ReferenceQueue<Object> queue;
+    //private static final ReferenceQueue<Object> queue;
 
     private static final Cleaner cleaner = Cleaner.create(new CleanerThreadFactory());
 
@@ -118,36 +118,36 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     public static void registerCleanable(CleanableObject owner, Runnable cleanAction) {
         Cleaner.Cleanable newCleanable = cleaner.register(owner, cleanAction);
-        addCleanableToMap(newCleanable, owner);
+        //addCleanableToMap(newCleanable, owner);
     }
 
-    private static void addCleanableToMap(Cleaner.Cleanable cleanable, CleanableObject owner) {
-        long totalMemory = rt.totalMemory();
-        long usedMemory = totalMemory - rt.freeMemory();
-        PhantomReference<CleanableObject> ownerRef = new PhantomReference<>(owner, queue);
+    // private static void addCleanableToMap(Cleaner.Cleanable cleanable, CleanableObject owner) {
+    //     long totalMemory = rt.totalMemory();
+    //     long usedMemory = totalMemory - rt.freeMemory();
+    //     PhantomReference<CleanableObject> ownerRef = new PhantomReference<>(owner, queue);
 
-        map.put(ownerRef,cleanable);
+    //     map.put(ownerRef,cleanable);
 
-        if (usedMemory >= (double) totalMemory * CUSTOM_MAX_MEMORY) {
-            clearMapItems();
-        }
-    }
+    //     if (usedMemory >= (double) totalMemory * CUSTOM_MAX_MEMORY) {
+    //         clearMapItems();
+    //     }
+    // }
 
-    private static void clearMapItems() {
-        PhantomReference<CleanableObject> ownerRef = (PhantomReference<CleanableObject>) queue.poll();
-        while (ownerRef != null){
-            Cleaner.Cleanable cleanable = map.get(ownerRef);
-            if (cleanable != null) {
-                map.remove(ownerRef, cleanable);
-                cleanable.clean();
-            }
-            else {
-                // change this
-                System.out.println("Something went wrong: No cleanable mapped to this reference");
-            }
-            ownerRef = (PhantomReference<CleanableObject>) queue.poll();
-        }
-    }
+    // private static void clearMapItems() {
+    //     PhantomReference<CleanableObject> ownerRef = (PhantomReference<CleanableObject>) queue.poll();
+    //     while (ownerRef != null){
+    //         Cleaner.Cleanable cleanable = map.get(ownerRef);
+    //         if (cleanable != null) {
+    //             map.remove(ownerRef, cleanable);
+    //             cleanable.clean();
+    //         }
+    //         else {
+    //             // change this
+    //             System.out.println("Something went wrong: No cleanable mapped to this reference");
+    //         }
+    //         ownerRef = (PhantomReference<CleanableObject>) queue.poll();
+    //     }
+    // }
 
     // Get OCK context for crypto operations
     //
