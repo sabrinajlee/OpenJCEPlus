@@ -10,9 +10,11 @@ package com.ibm.crypto.plus.provider;
 
 import com.ibm.crypto.plus.provider.ock.OCKContext;
 import java.lang.ref.Cleaner;
+import java.lang.ref.Cleaner.Cleanable;
+import java.lang.ref.ReferenceQueue;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+//import java.lang.reflect.InvocationTargetException;
+//import java.lang.reflect.Method;
 import java.security.ProviderException;
 import java.util.concurrent.ThreadFactory;
 
@@ -42,7 +44,8 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     private static Object cleanerimpl;
 
-    private static Method runCleaning;
+    //private static Method runCleaning;
+    private static ReferenceQueue<Object> queue;
 
     private static final double DEFAULT_MAX_MEMORY = 0.6;
 
@@ -79,11 +82,13 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
             cleanerimpl = impl.get(cleaner);
 
-            runCleaning = cleanerimpl.getClass().getDeclaredMethod("run");
-            runCleaning.setAccessible(true);
-            System.out.println(runCleaning.getName());
+            //runCleaning = cleanerimpl.getClass().getDeclaredMethod("run");
+            //runCleaning.setAccessible(true);
+            Field internalQueue = cleanerimpl.getClass().getDeclaredField("queue");
+            internalQueue.setAccessible(true);
+            queue = (ReferenceQueue<Object>) internalQueue.get(cleanerimpl);
         }
-        catch (NoSuchMethodException | NoSuchFieldException | IllegalAccessException e) {    
+        catch (NoSuchFieldException | IllegalAccessException e) {    
             e.printStackTrace();
             System.exit(0);
         }
@@ -107,13 +112,25 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     public static void registerCleanable(CleanableObject owner, Runnable cleanAction) {
         cleaner.register(owner, cleanAction);
-        if (runCleaning != null && needCleaning()){
+        // if (runCleaning != null && needCleaning()){
+        //     try {
+        //         runCleaning.invoke(cleanerimpl);
+        //     }
+        //     catch (IllegalAccessException | InvocationTargetException e) {
+        //         e.printStackTrace();
+        //         System.exit(0);
+        //     }
+        // }
+        if (needCleaning()){
             try {
-                runCleaning.invoke(cleanerimpl);
+                Cleanable ref = (Cleanable) queue.remove(1 * 1000L);
+                while (ref != null){
+                    ref.clean();
+                    ref = (Cleanable) queue.remove(1 * 1000L);
+                }
             }
-            catch (IllegalAccessException | InvocationTargetException e) {
+            catch (InterruptedException e) {
                 e.printStackTrace();
-                System.exit(0);
             }
         }
     }
