@@ -9,7 +9,6 @@
 package com.ibm.crypto.plus.provider;
 
 import com.ibm.crypto.plus.provider.ock.OCKContext;
-import java.lang.IllegalAccessException;
 import java.lang.ref.Cleaner;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -40,6 +39,8 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     private static  Runtime rt = Runtime.getRuntime();
 
     private static final Cleaner cleaner = Cleaner.create(new CleanerThreadFactory());
+
+    private static Object cleanerimpl;
 
     private static Method runCleaning;
 
@@ -76,7 +77,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
             Field impl = cleaner.getClass().getDeclaredField("impl");
             impl.setAccessible(true);
 
-            Object cleanerimpl = impl.get(cleaner);
+            cleanerimpl = impl.get(cleaner);
 
             runCleaning = cleanerimpl.getClass().getDeclaredMethod("run");
             runCleaning.setAccessible(true);
@@ -108,7 +109,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
         cleaner.register(owner, cleanAction);
         if (runCleaning != null && needCleaning()){
             try {
-                runCleaning.invoke(cleaner);
+                runCleaning.invoke(cleanerimpl);
             }
             catch (IllegalAccessException | InvocationTargetException e) {
                 e.printStackTrace();
