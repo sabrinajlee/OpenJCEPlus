@@ -13,8 +13,6 @@ import java.lang.ref.Cleaner;
 import java.lang.ref.Cleaner.Cleanable;
 import java.lang.ref.ReferenceQueue;
 import java.lang.reflect.Field;
-//import java.lang.reflect.InvocationTargetException;
-//import java.lang.reflect.Method;
 import java.security.ProviderException;
 import java.util.concurrent.ThreadFactory;
 
@@ -123,10 +121,9 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
         // }
         if (needCleaning()){
             try {
-                Cleanable ref = (Cleanable) queue.remove(1 * 1000L);
-                while (ref != null){
+                Cleanable ref;
+                while ((ref = (Cleanable) queue.remove(1 * 1000L)) != null){
                     ref.clean();
-                    ref = (Cleanable) queue.remove(1 * 1000L);
                 }
             }
             catch (InterruptedException e) {
