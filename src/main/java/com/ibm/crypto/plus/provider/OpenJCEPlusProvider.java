@@ -9,13 +9,12 @@
 package com.ibm.crypto.plus.provider;
 
 import com.ibm.crypto.plus.provider.ock.OCKContext;
-import java.lang.reflect.*;
+import java.lang.IllegalAccessException;
 import java.lang.ref.Cleaner;
-import java.lang.ref.PhantomReference;
-import java.lang.ref.ReferenceQueue;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.security.ProviderException;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
 
 // Internal interface for OpenJCEPlus and OpenJCEPlus implementation classes.
@@ -106,9 +105,8 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     }
 
     public static void registerCleanable(CleanableObject owner, Runnable cleanAction) {
-        Cleaner.Cleanable newCleanable = cleaner.register(owner, cleanAction);
+        cleaner.register(owner, cleanAction);
         if (runCleaning != null && needCleaning()){
-            System.out.println("works here");
             try {
                 runCleaning.invoke(cleaner);
             }
