@@ -37,12 +37,10 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     //    private static boolean verifiedSelfIntegrity = false;
     private static final boolean verifiedSelfIntegrity = true;
-
-    private static final ConcurrentHashMap<PhantomReference<CleanableObject>, Cleaner.Cleanable> map = new ConcurrentHashMap<>();
     
     private static  Runtime rt = Runtime.getRuntime();
 
-    private static final ReferenceQueue<CleanableObject> queue = new ReferenceQueue<>();
+    private static final ReferenceQueue<Object> queue;
 
     private static final Cleaner cleaner = Cleaner.create(new CleanerThreadFactory());
 
@@ -75,38 +73,31 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     }
 
     static {
-        // jdk.internal.ref.CleanerImpl java.lang.ref.Cleaner.impl
         try {
             Field impl = cleaner.getClass().getDeclaredField("impl");
             impl.setAccessible(true);
 
             Object cleanerimpl = impl.get(cleaner);
-            System.out.println("Class: " + cleanerimpl.getClass());
 
-            Field[] fields = cleanerimpl.getClass().getDeclaredFields();
-            System.out.println("Fields: ");
-            for (Field field : fields){
-                System.out.println("    " + field.getName());
+             Method[] methods = cleanerimpl.getClass().getDeclaredMethods();
+            //      >>>> cleanerImplAccess activeList queue
+            for (Method method : methods) {
+                System.out.println(method);
+                System.out.println(method.getName());
             }
-            
+
+            // Field cleanerQueue = cleanerimpl.getClass().getDeclaredField("queue");
+            // cleanerQueue.setAccessible(true);
+
+            // Object queueobj = cleanerQueue.get(cleaner);
+            // queue = (ReferenceQueue<Object>) queueobj;
         }
         catch (NoSuchFieldException | IllegalAccessException e) {    
             e.printStackTrace();
         }
-
-        // for (Field field : fields) {
-        //     Type fieldType = field.getGenericType();
-        //     Field[] innerFields = fieldClass.getDeclaredFields();
-
-
-        //     System.out.println(field.getName());
-        //     System.out.println(fieldClass);
-        //     System.out.println("    Inner fields: ");
-        //     System.out.println("        " + innerFields);
-            
-        // }
-
-        
+        finally {
+            // dealing with the case where queue wasn't set 
+        }
     }
 
     OpenJCEPlusProvider(String name, String info) {
