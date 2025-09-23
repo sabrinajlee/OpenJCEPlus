@@ -80,6 +80,8 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
             Object cleanerimpl = impl.get(cleaner);
 
             runCleaning = cleanerimpl.getClass().getDeclaredMethod("run");
+            runCleaning.setAccessible(true);
+            System.out.println(runCleaning.getName());
         }
         catch (NoSuchMethodException | NoSuchFieldException | IllegalAccessException e) {    
             e.printStackTrace();
@@ -105,15 +107,15 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     public static void registerCleanable(CleanableObject owner, Runnable cleanAction) {
         Cleaner.Cleanable newCleanable = cleaner.register(owner, cleanAction);
-        if (runCleaning != null && needCleaning()){
-            try {
-                runCleaning.invoke(cleaner);
-            }
-            catch (IllegalAccessException | InvocationTargetException e) {
-                e.printStackTrace();
-                System.exit(0);
-            }
-        }
+        // if (runCleaning != null && needCleaning()){
+        //     try {
+        //         runCleaning.invoke(cleaner);
+        //     }
+        //     catch (IllegalAccessException | InvocationTargetException e) {
+        //         e.printStackTrace();
+        //         System.exit(0);
+        //     }
+        // }
     }
 
     private static boolean needCleaning() {
