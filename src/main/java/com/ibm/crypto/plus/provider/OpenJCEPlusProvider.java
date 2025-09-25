@@ -134,7 +134,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
             }
             synchronized(lock){
                 System.out.println("main has lock, notifying cleaning thread now");
-                manualCleaningThread.notify();
+                lock.notify();
             }
             
         }
