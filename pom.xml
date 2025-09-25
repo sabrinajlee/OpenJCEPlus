@@ -318,6 +318,10 @@
                               <value>.</value>
                             </systemProperty>
                           </systemProperties>
+                          <jvmArgs>          
+                              <jvmArg>--add-opens=java.base/java.lang.ref=ALL-UNNAMED</jvmArg>          
+                              <jvmArg>--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED</jvmArg>        
+                          </jvmArgs>
                           <mainClass>${jmh.benchmark}</mainClass>
                           <skip>${jmh.benchmark.skip}</skip>
                         </configuration>
