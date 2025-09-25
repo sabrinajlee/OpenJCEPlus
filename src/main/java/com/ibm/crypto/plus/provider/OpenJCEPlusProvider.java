@@ -123,17 +123,17 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
         //     }
         // }
         if (needCleaning()){
-            System.out.println("heap full");
             // initializing manual cleaning thread
             if (manualCleaningThread == null){
                 System.out.println("initializing the cleanign thread");
                 lock = new Object();
                 manualCleaningThread = new CleaningThread(lock);
                 System.out.println("Starting thread now...");
+                manualCleaningThread.setDaemon(true);
                 manualCleaningThread.start();
             }
             synchronized(lock){
-                System.out.println("main has lock, notifying cleaning thread now");
+                System.out.println("noti");
                 lock.notify();
             }
             
