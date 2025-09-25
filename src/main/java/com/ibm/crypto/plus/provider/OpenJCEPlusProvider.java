@@ -42,8 +42,11 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     private static Object cleanerimpl;
 
-    //private static Method runCleaning;
     private static ReferenceQueue<Object> queue;
+
+    private static Thread manualCleaningThread;
+
+    private static Object lock;
 
     private static final double DEFAULT_MAX_MEMORY = 0.6;
 
@@ -120,15 +123,20 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
         //     }
         // }
         if (needCleaning()){
-            try {
-                Cleanable ref;
-                while ((ref = (Cleanable) queue.remove(1 * 1000L)) != null){
-                    ref.clean();
-                }
+            System.out.println("heap full");
+            // initializing manual cleaning thread
+            if (manualCleaningThread == null){
+                System.out.println("initializing the cleanign thread");
+                lock = new Object();
+                manualCleaningThread = new CleaningThread(lock);
+                System.out.println("Starting thread now...");
+                manualCleaningThread.start();
             }
-            catch (InterruptedException e) {
-                e.printStackTrace();
+            synchronized(lock){
+                System.out.println("main has lock, notifying cleaning thread now");
+                manualCleaningThread.notify();
             }
+            
         }
     }
 
@@ -139,9 +147,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
         if (usedMemory >= (double) totalMemory * CUSTOM_MAX_MEMORY) {
             return true;
         }
-        else {
-            return false;
-        }
+        return false;
     }
 
     // Get OCK context for crypto operations
@@ -186,6 +192,45 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
             return thread;
         }
 
+    }
+
+    public static class CleaningThread extends Thread {
+        public CleaningThread(Object newlock){
+            lock = newlock;
+        }
+
+        public void run() {
+            while (true) {
+                synchronized(lock){
+                    try {
+                        System.out.println("man thread has lock, gonna wait (releasing lock)");
+                        lock.wait();
+                    }
+                    catch (InterruptedException e){
+                        Thread.currentThread().interrupt();
+                        e.printStackTrace();
+                        System.exit(0);
+                    }
+                }
+                System.out.println("done waiting, cleaning now");
+                doCleaning();
+                System.out.println("done cleaning");
+            }
+        }
+
+        public void doCleaning() {
+            try {
+                Cleanable ref;
+                while ((ref = (Cleanable) queue.remove(1 * 1000L)) != null){
+                    ref.clean();
+                }
+            }
+            catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        
     }
 }
 
