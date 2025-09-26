@@ -10,10 +10,8 @@ package com.ibm.crypto.plus.provider;
 
 import com.ibm.crypto.plus.provider.ock.OCKContext;
 import java.lang.ref.Cleaner;
-import java.lang.ref.PhantomReference;
-import java.lang.ref.ReferenceQueue;
 import java.security.ProviderException;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.ThreadFactory;
 
 // Internal interface for OpenJCEPlus and OpenJCEPlus implementation classes.
@@ -36,28 +34,24 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     //    private static boolean verifiedSelfIntegrity = false;
     private static final boolean verifiedSelfIntegrity = true;
 
-    private static final ConcurrentHashMap<PhantomReference<CleanableObject>, Cleaner.Cleanable> map = new ConcurrentHashMap<>();
-    
-    private static  Runtime rt = Runtime.getRuntime();
+    private static final Cleaner[] cleaners;
 
-    private static final ReferenceQueue<CleanableObject> queue = new ReferenceQueue<>();
+    private static final int DEFAULT_NUM_CLEANERS = 1;
 
-    private static final Cleaner cleaner = Cleaner.create(new CleanerThreadFactory());
+    private static final int CUSTOM_NUM_CLEANERS;
 
-    private static final double DEFAULT_MAX_MEMORY = 0.6;
-
-    private static final double CUSTOM_MAX_MEMORY;
+    private static AtomicInteger count = new AtomicInteger(0);
 
     static {
-        double tempMaxMem = DEFAULT_MAX_MEMORY;
-        String newMaxMem = System.getProperty("my.maxMemory");
+        int tempNumCleaners = DEFAULT_NUM_CLEANERS;
+        String newNumCleaners = System.getProperty("numCleaners");
 
-        if (newMaxMem != null){
+        if (newNumCleaners != null){
             try {
-                double parsedValue = Double.parseDouble(newMaxMem);
+                int parsedValue = Integer.parseInt(newNumCleaners);
 
-                if (parsedValue < 1 && parsedValue > 0){
-                    tempMaxMem = parsedValue;
+                if (parsedValue >= 1){ // should set a max?
+                    tempNumCleaners = parsedValue;
                 }
                 else {
                     // change this
@@ -69,7 +63,16 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
                 System.out.println("Warning: Max memory must be set to a double.");
             }
         }
-        CUSTOM_MAX_MEMORY = tempMaxMem;
+        CUSTOM_NUM_CLEANERS = tempNumCleaners;
+    }
+
+    static {
+        cleaners = new Cleaner[CUSTOM_NUM_CLEANERS];
+        
+        for (int i = 0; i < CUSTOM_NUM_CLEANERS; i++) {
+            final Cleaner cleaner = Cleaner.create(new CleanerThreadFactory());
+            cleaners[i] = cleaner;
+        }
     }
 
     OpenJCEPlusProvider(String name, String info) {
@@ -89,36 +92,8 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     }
 
     public static void registerCleanable(CleanableObject owner, Runnable cleanAction) {
-        Cleaner.Cleanable newCleanable = cleaner.register(owner, cleanAction);
-        addCleanableToMap(newCleanable, owner);
-    }
-
-    private static void addCleanableToMap(Cleaner.Cleanable cleanable, CleanableObject owner) {
-        long totalMemory = rt.totalMemory();
-        long usedMemory = totalMemory - rt.freeMemory();
-        PhantomReference<CleanableObject> ownerRef = new PhantomReference<>(owner, queue);
-
-        map.put(ownerRef,cleanable);
-
-        if (usedMemory >= (double) totalMemory * CUSTOM_MAX_MEMORY) {
-            clearMapItems();
-        }
-    }
-
-    private static void clearMapItems() {
-        PhantomReference<CleanableObject> ownerRef = (PhantomReference<CleanableObject>) queue.poll();
-        while (ownerRef != null){
-            Cleaner.Cleanable cleanable = map.get(ownerRef);
-            if (cleanable != null) {
-                map.remove(ownerRef, cleanable);
-                cleanable.clean();
-            }
-            else {
-                // change this
-                System.out.println("Something went wrong: No cleanable mapped to this reference");
-            }
-            ownerRef = (PhantomReference<CleanableObject>) queue.poll();
-        }
+        Cleaner cleaner = cleaners[count.incrementAndGet() % 5];
+        cleaner.register(owner, cleanAction);
     }
 
     // Get OCK context for crypto operations
