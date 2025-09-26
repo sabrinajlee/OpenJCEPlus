@@ -11,8 +11,8 @@ package com.ibm.crypto.plus.provider;
 import com.ibm.crypto.plus.provider.ock.OCKContext;
 import java.lang.ref.Cleaner;
 import java.security.ProviderException;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 // Internal interface for OpenJCEPlus and OpenJCEPlus implementation classes.
 // Implemented as an abstract class rather than an interface so that 
@@ -92,7 +92,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     }
 
     public static void registerCleanable(CleanableObject owner, Runnable cleanAction) {
-        Cleaner cleaner = cleaners[count.incrementAndGet() % 5];
+        Cleaner cleaner = cleaners[count.getAndIncrement() % 5];
         cleaner.register(owner, cleanAction);
     }
 
