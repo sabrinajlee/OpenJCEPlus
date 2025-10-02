@@ -38,10 +38,10 @@ public class MessageDigestInstanceBenchmark extends JMHBase {
     @Param({"OpenJCEPlus", "SUN"})
     private String provider;
 
-    private MessageDigest messageDigestSHA512;
-    private MessageDigest messageDigestSHA256;
+ //   private MessageDigest messageDigestSHA512;
+ //   private MessageDigest messageDigestSHA256;
     private MessageDigest messageDigestMD5;
-    private MessageDigest messageDigestSHA1;
+ //   private MessageDigest messageDigestSHA1;
     private byte[] payload;
     protected SecureRandom random = new SecureRandom();
 
@@ -52,17 +52,17 @@ public class MessageDigestInstanceBenchmark extends JMHBase {
         random.nextBytes(payload);
     }
 
-    @Benchmark
-    public byte[] sha512Instance() throws Exception {
-        messageDigestSHA512 = MessageDigest.getInstance("SHA-512", provider);
-        return messageDigestSHA512.digest(payload);
-    }
+    // @Benchmark
+    // public byte[] sha512Instance() throws Exception {
+    //     messageDigestSHA512 = MessageDigest.getInstance("SHA-512", provider);
+    //     return messageDigestSHA512.digest(payload);
+    // }
 
-    @Benchmark
-    public byte[] sha256Instance() throws Exception {
-        messageDigestSHA256 = MessageDigest.getInstance("SHA-256", provider);
-        return messageDigestSHA256.digest(payload);
-    }
+    // @Benchmark
+    // public byte[] sha256Instance() throws Exception {
+    //     messageDigestSHA256 = MessageDigest.getInstance("SHA-256", provider);
+    //     return messageDigestSHA256.digest(payload);
+    // }
 
     @Benchmark
     public byte[] md5Instance() throws Exception {
@@ -70,11 +70,11 @@ public class MessageDigestInstanceBenchmark extends JMHBase {
         return messageDigestMD5.digest(payload);
     }
 
-    @Benchmark
-    public byte[] sha1Instance() throws Exception {
-        messageDigestSHA1 = MessageDigest.getInstance("SHA1", provider);
-        return messageDigestSHA1.digest(payload);
-    }
+    // @Benchmark
+    // public byte[] sha1Instance() throws Exception {
+    //     messageDigestSHA1 = MessageDigest.getInstance("SHA1", provider);
+    //     return messageDigestSHA1.digest(payload);
+    // }
 
     public static void main(String[] args) throws RunnerException {
         String testSimpleName = MessageDigestInstanceBenchmark.class.getSimpleName();
