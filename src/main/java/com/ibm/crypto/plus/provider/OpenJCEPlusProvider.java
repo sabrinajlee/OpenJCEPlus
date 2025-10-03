@@ -36,7 +36,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     private static final Cleaner[] cleaners;
 
-    private static final int DEFAULT_NUM_CLEANERS = 1;
+    private static final int DEFAULT_NUM_CLEANERS = 2;
 
     private static final int CUSTOM_NUM_CLEANERS;
 
