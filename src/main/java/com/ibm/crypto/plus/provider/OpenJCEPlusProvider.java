@@ -45,7 +45,6 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     static {
         int tempNumCleaners = DEFAULT_NUM_CLEANERS;
         String newNumCleaners = System.getProperty("numCleaners");
-        cleaners = new Cleaner[CUSTOM_NUM_CLEANERS];
 
         if (newNumCleaners != null){
             try {
@@ -65,6 +64,8 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
             }
         }
         CUSTOM_NUM_CLEANERS = tempNumCleaners;
+        
+        cleaners = new Cleaner[CUSTOM_NUM_CLEANERS];
         
         for (int i = 0; i < CUSTOM_NUM_CLEANERS; i++) {
             final Cleaner cleaner = Cleaner.create(new CleanerThreadFactory());
