@@ -44,6 +44,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     private static AtomicInteger count = new AtomicInteger(0);
 
      static {
+        cleaners = new Cleaner[1];
         cleaners[0] = cleaner;
     //     // int tempNumCleaners = DEFAULT_NUM_CLEANERS;
     //     // String newNumCleaners = System.getProperty("numCleaners");
