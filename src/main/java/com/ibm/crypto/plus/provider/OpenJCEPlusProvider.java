@@ -34,7 +34,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     //    private static boolean verifiedSelfIntegrity = false;
     private static final boolean verifiedSelfIntegrity = true;
 
-    //private static final Cleaner[] cleaners;
+    private static final Cleaner[] cleaners;
 
     static final Cleaner cleaner = Cleaner.create(new CleanerThreadFactory());
     private static final int DEFAULT_NUM_CLEANERS = 1;
@@ -43,7 +43,8 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     private static AtomicInteger count = new AtomicInteger(0);
 
-    // static {
+     static {
+        cleaners[0] = cleaner;
     //     // int tempNumCleaners = DEFAULT_NUM_CLEANERS;
     //     // String newNumCleaners = System.getProperty("numCleaners");
 
@@ -72,7 +73,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     //         final Cleaner cleaner = Cleaner.create(new CleanerThreadFactory());
     //         cleaners[i] = cleaner;
     //     }
-    // }
+     }
 
     OpenJCEPlusProvider(String name, String info) {
         super(name, PROVIDER_VER, info);
@@ -91,7 +92,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     }
 
     public static void registerCleanable(Object owner, Runnable cleanAction) {
-        //Cleaner cleaner = cleaners[count.getAndIncrement() % CUSTOM_NUM_CLEANERS];
+        Cleaner cleaner = cleaners[count.getAndIncrement() % 1];
         cleaner.register(owner, cleanAction);
     }
 
