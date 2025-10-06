@@ -34,44 +34,45 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     //    private static boolean verifiedSelfIntegrity = false;
     private static final boolean verifiedSelfIntegrity = true;
 
-    private static final Cleaner[] cleaners;
+    //private static final Cleaner[] cleaners;
 
-    private static final int DEFAULT_NUM_CLEANERS = 2;
+    static final Cleaner cleaner = Cleaner.create(new CleanerThreadFactory());
+    private static final int DEFAULT_NUM_CLEANERS = 1;
 
-    private static final int CUSTOM_NUM_CLEANERS;
+   // private static final int CUSTOM_NUM_CLEANERS;
 
     private static AtomicInteger count = new AtomicInteger(0);
 
-    static {
-        int tempNumCleaners = DEFAULT_NUM_CLEANERS;
-        String newNumCleaners = System.getProperty("numCleaners");
+    // static {
+    //     // int tempNumCleaners = DEFAULT_NUM_CLEANERS;
+    //     // String newNumCleaners = System.getProperty("numCleaners");
 
-        if (newNumCleaners != null){
-            try {
-                int parsedValue = Integer.parseInt(newNumCleaners);
+    //     // if (newNumCleaners != null){
+    //     //     try {
+    //     //         int parsedValue = Integer.parseInt(newNumCleaners);
 
-                if (parsedValue >= 1){ // should set a max?
-                    tempNumCleaners = parsedValue;
-                }
-                else {
-                    // change this
-                    System.out.println("Warning: Max memory must be set to a double between 0 and 1, default 0.6.");
-                }
-            }
-            catch (NumberFormatException e) {
-                // change this
-                System.out.println("Warning: Max memory must be set to a double.");
-            }
-        }
-        CUSTOM_NUM_CLEANERS = tempNumCleaners;
+    //     //         if (parsedValue >= 1){ // should set a max?
+    //     //             tempNumCleaners = parsedValue;
+    //     //         }
+    //     //         else {
+    //     //             // change this
+    //     //             System.out.println("Warning: Max memory must be set to a double between 0 and 1, default 0.6.");
+    //     //         }
+    //     //     }
+    //     //     catch (NumberFormatException e) {
+    //     //         // change this
+    //     //         System.out.println("Warning: Max memory must be set to a double.");
+    //     //     }
+    //     // }
+    //     // CUSTOM_NUM_CLEANERS = tempNumCleaners;
         
-        cleaners = new Cleaner[CUSTOM_NUM_CLEANERS];
+    //     // cleaners = new Cleaner[CUSTOM_NUM_CLEANERS];
         
-        for (int i = 0; i < CUSTOM_NUM_CLEANERS; i++) {
-            final Cleaner cleaner = Cleaner.create(new CleanerThreadFactory());
-            cleaners[i] = cleaner;
-        }
-    }
+    //     for (int i = 0; i < CUSTOM_NUM_CLEANERS; i++) {
+    //         final Cleaner cleaner = Cleaner.create(new CleanerThreadFactory());
+    //         cleaners[i] = cleaner;
+    //     }
+    // }
 
     OpenJCEPlusProvider(String name, String info) {
         super(name, PROVIDER_VER, info);
@@ -90,7 +91,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     }
 
     public static void registerCleanable(Object owner, Runnable cleanAction) {
-        Cleaner cleaner = cleaners[count.getAndIncrement() % CUSTOM_NUM_CLEANERS];
+        //Cleaner cleaner = cleaners[count.getAndIncrement() % CUSTOM_NUM_CLEANERS];
         cleaner.register(owner, cleanAction);
     }
 
