@@ -64,9 +64,8 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
             }
         }
         CUSTOM_NUM_CLEANERS = tempNumCleaners;
-    }
 
-    static {
+        //
         cleaners = new Cleaner[CUSTOM_NUM_CLEANERS];
         
         for (int i = 0; i < CUSTOM_NUM_CLEANERS; i++) {
@@ -91,7 +90,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
         return true;
     }
 
-    public static void registerCleanable(Object owner, Runnable cleanAction) {
+    public static synchronized void registerCleanable(Object owner, Runnable cleanAction) {
         Cleaner cleaner = cleaners[count.getAndIncrement() % CUSTOM_NUM_CLEANERS];
         cleaner.register(owner, cleanAction);
     }
