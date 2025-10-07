@@ -34,18 +34,19 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     //    private static boolean verifiedSelfIntegrity = false;
     private static final boolean verifiedSelfIntegrity = true;
 
-    private static final Cleaner[] cleaners;
+    //private static final Cleaner[] cleaners;
 
-    static final Cleaner cleaner = Cleaner.create(new CleanerThreadFactory());
-    private static final int DEFAULT_NUM_CLEANERS = 1;
+    static final Cleaner cleaner1 = Cleaner.create(new CleanerThreadFactory());
+    static final Cleaner cleaner2 = Cleaner.create(new CleanerThreadFactory());
+    //private static final int DEFAULT_NUM_CLEANERS = 1;
 
    // private static final int CUSTOM_NUM_CLEANERS;
 
     private static AtomicInteger count = new AtomicInteger(0);
 
      static {
-        cleaners = new Cleaner[1];
-        cleaners[0] = cleaner;
+        // cleaners = new Cleaner[1];
+        // cleaners[0] = cleaner;
     //     // int tempNumCleaners = DEFAULT_NUM_CLEANERS;
     //     // String newNumCleaners = System.getProperty("numCleaners");
 
@@ -93,8 +94,16 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     }
 
     public static void registerCleanable(Object owner, Runnable cleanAction) {
-        Cleaner cleaner = cleaners[count.getAndIncrement() % 1];
-        cleaner.register(owner, cleanAction);
+        int assign = count.getAndIncrement() % 2;
+        if (assign == 0){
+            cleaner1.register(owner, cleanAction);
+        }
+        else {
+            cleaner2.register(owner, cleanAction);
+        }
+
+        // Cleaner cleaner = cleaners[count.getAndIncrement() % 1];
+        // cleaner.register(owner, cleanAction);
     }
 
     // Get OCK context for crypto operations
