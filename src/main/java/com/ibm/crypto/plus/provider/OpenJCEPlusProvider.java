@@ -64,9 +64,6 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
             }
         }
         CUSTOM_NUM_CLEANERS = tempNumCleaners;
-    }
-
-    static {
         cleaners = new Cleaner[CUSTOM_NUM_CLEANERS];
         
         for (int i = 0; i < CUSTOM_NUM_CLEANERS; i++) {
@@ -134,7 +131,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
         @Override
         public Thread newThread(Runnable r) {
             Thread thread = new Thread(r);
-            thread.setPriority(Thread.MAX_PRIORITY);
+            thread.setPriority(Thread.NORM_PRIORITY);
             return thread;
         }
 
