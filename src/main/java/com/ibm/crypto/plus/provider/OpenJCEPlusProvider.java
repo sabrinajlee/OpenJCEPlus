@@ -34,15 +34,48 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     //    private static boolean verifiedSelfIntegrity = false;
     private static final boolean verifiedSelfIntegrity = true;
 
-    private static final Cleaner[] cleaners;
+    private final Cleaner[] cleaners;
 
-    private static final int DEFAULT_NUM_CLEANERS = 2;
+    private final int DEFAULT_NUM_CLEANERS = 2;
 
-    private static final int CUSTOM_NUM_CLEANERS;
+    private final int CUSTOM_NUM_CLEANERS;
 
-    private static AtomicInteger count = new AtomicInteger(0);
+    private AtomicInteger count = new AtomicInteger(0);
 
-    static {
+  //  static {
+        // int tempNumCleaners = DEFAULT_NUM_CLEANERS;
+        // String newNumCleaners = System.getProperty("numCleaners");
+
+        // if (newNumCleaners != null){
+        //     try {
+        //         int parsedValue = Integer.parseInt(newNumCleaners);
+
+        //         if (parsedValue >= 1){ // should set a max?
+        //             tempNumCleaners = parsedValue;
+        //         }
+        //         else {
+        //             // change this
+        //             System.out.println("Warning: Max memory must be set to a double between 0 and 1, default 0.6.");
+        //         }
+        //     }
+        //     catch (NumberFormatException e) {
+        //         // change this
+        //         System.out.println("Warning: Max memory must be set to a double.");
+        //     }
+        // }
+        // CUSTOM_NUM_CLEANERS = tempNumCleaners;
+
+        // cleaners = new Cleaner[CUSTOM_NUM_CLEANERS];
+        
+        // for (int i = 0; i < CUSTOM_NUM_CLEANERS; i++) {
+        //     final Cleaner cleaner = Cleaner.create(new CleanerThreadFactory());
+        //     cleaners[i] = cleaner;
+        // }
+   // }
+
+    OpenJCEPlusProvider(String name, String info) {
+        super(name, PROVIDER_VER, info);
+
         int tempNumCleaners = DEFAULT_NUM_CLEANERS;
         String newNumCleaners = System.getProperty("numCleaners");
 
@@ -64,19 +97,13 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
             }
         }
         CUSTOM_NUM_CLEANERS = tempNumCleaners;
-    }
 
-    static {
         cleaners = new Cleaner[CUSTOM_NUM_CLEANERS];
         
         for (int i = 0; i < CUSTOM_NUM_CLEANERS; i++) {
             final Cleaner cleaner = Cleaner.create(new CleanerThreadFactory());
             cleaners[i] = cleaner;
         }
-    }
-
-    OpenJCEPlusProvider(String name, String info) {
-        super(name, PROVIDER_VER, info);
     }
 
     static final boolean verifySelfIntegrity(Object c) {
