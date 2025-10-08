@@ -53,37 +53,37 @@ public class MessageDigestBenchmark extends JMHBase {
 
         payload = new byte[payloadSize];
         random.nextBytes(payload);
-        messageDigestSHA512 = MessageDigest.getInstance("SHA-512", provider);
-        messageDigestSHA512_224 = MessageDigest.getInstance("SHA512/224", provider);
-        messageDigestSHA512_256 = MessageDigest.getInstance("SHA512/256", provider);
-        messageDigestSHA256 = MessageDigest.getInstance("SHA-256", provider);
+        // messageDigestSHA512 = MessageDigest.getInstance("SHA-512", provider);
+        // messageDigestSHA512_224 = MessageDigest.getInstance("SHA512/224", provider);
+        // messageDigestSHA512_256 = MessageDigest.getInstance("SHA512/256", provider);
+        // messageDigestSHA256 = MessageDigest.getInstance("SHA-256", provider);
         messageDigestMD5 = MessageDigest.getInstance("MD5", provider);
-        messageDigestSHA1 = MessageDigest.getInstance("SHA1", provider);
+        // messageDigestSHA1 = MessageDigest.getInstance("SHA1", provider);
     }
 
-    @Benchmark
-    public byte[] sha512UpdateDigest() {
-        messageDigestSHA512.update(payload);
-        return messageDigestSHA512.digest();
-    }
+    // @Benchmark
+    // public byte[] sha512UpdateDigest() {
+    //     messageDigestSHA512.update(payload);
+    //     return messageDigestSHA512.digest();
+    // }
 
-    @Benchmark
-    public byte[] sha512_224UpdateDigest() {
-        messageDigestSHA512_224.update(payload);
-        return messageDigestSHA512_224.digest();
-    }
+    // @Benchmark
+    // public byte[] sha512_224UpdateDigest() {
+    //     messageDigestSHA512_224.update(payload);
+    //     return messageDigestSHA512_224.digest();
+    // }
 
-    @Benchmark
-    public byte[] sha512_256UpdateDigest() {
-        messageDigestSHA512_256.update(payload);
-        return messageDigestSHA512_256.digest();
-    }
+    // @Benchmark
+    // public byte[] sha512_256UpdateDigest() {
+    //     messageDigestSHA512_256.update(payload);
+    //     return messageDigestSHA512_256.digest();
+    // }
 
-    @Benchmark
-    public byte[] sha256UpdateDigest() {
-        messageDigestSHA256.update(payload);
-        return messageDigestSHA256.digest();
-    }
+    // @Benchmark
+    // public byte[] sha256UpdateDigest() {
+    //     messageDigestSHA256.update(payload);
+    //     return messageDigestSHA256.digest();
+    // }
 
     @Benchmark
     public byte[] md5UpdateDigest() {
@@ -91,31 +91,31 @@ public class MessageDigestBenchmark extends JMHBase {
         return messageDigestMD5.digest();
     }
 
-    @Benchmark
-    public byte[] sha1UpdateDigest() {
-        messageDigestSHA1.update(payload);
-        return messageDigestSHA1.digest();
-    }
+    // @Benchmark
+    // public byte[] sha1UpdateDigest() {
+    //     messageDigestSHA1.update(payload);
+    //     return messageDigestSHA1.digest();
+    // }
 
-    @Benchmark
-    public byte[] sha512SingleShotDigest() {
-        return messageDigestSHA512.digest(payload);
-    }
+    // @Benchmark
+    // public byte[] sha512SingleShotDigest() {
+    //     return messageDigestSHA512.digest(payload);
+    // }
 
-    @Benchmark
-    public byte[] sha256SingleShotDigest() {
-        return messageDigestSHA256.digest(payload);
-    }
+    // @Benchmark
+    // public byte[] sha256SingleShotDigest() {
+    //     return messageDigestSHA256.digest(payload);
+    // }
 
     @Benchmark
     public byte[] md5SingleShotDigest() {
         return messageDigestMD5.digest(payload);
     }
 
-    @Benchmark
-    public byte[] sha1SingleShotDigest() {
-        return messageDigestSHA1.digest(payload);
-    }
+    // @Benchmark
+    // public byte[] sha1SingleShotDigest() {
+    //     return messageDigestSHA1.digest(payload);
+    // }
 
     public static void main(String[] args) throws RunnerException {
         String testSimpleName = MessageDigestBenchmark.class.getSimpleName();
