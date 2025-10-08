@@ -193,6 +193,18 @@ public final class Digest implements Cloneable {
         return new Digest(ockContext, digestAlgo, provider);
     }
 
+    public static Digest getInstance(OCKContext ockContext, String digestAlgo) throws OCKException {
+        if (ockContext == null) {
+            throw new IllegalArgumentException("context is null");
+        }
+
+        if (digestAlgo == null || digestAlgo.isEmpty()) {
+            throw new IllegalArgumentException("digestAlgo is null/empty");
+        }
+
+        return new Digest(ockContext, digestAlgo, null);
+    }
+
     private Digest(OCKContext ockContext, String digestAlgo, OpenJCEPlusProvider provider) throws OCKException {
         //final String methodName = "Digest(String)";
         this.ockContext = ockContext;
@@ -201,8 +213,10 @@ public final class Digest implements Cloneable {
         getContext();
         //OCKDebug.Msg(debPrefix, methodName,  "digestAlgo :" + digestAlgo);
 
-        this.provider.registerCleanable(this, cleanOCKResources(digestId, algIndx,
-            contextFromQueue, needsReinit, ockContext));
+        if (provider != null) {
+            this.provider.registerCleanable(this, cleanOCKResources(digestId, algIndx,
+                contextFromQueue, needsReinit, ockContext));
+        }
     }
 
     private Digest() {
