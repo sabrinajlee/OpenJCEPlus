@@ -179,7 +179,9 @@ public final class Digest implements Cloneable {
 
     private long digestId = 0;
 
-    public static Digest getInstance(OCKContext ockContext, String digestAlgo) throws OCKException {
+    private OpenJCEPlusProvider provider;
+
+    public static Digest getInstance(OCKContext ockContext, String digestAlgo, OpenJCEPlusProvider provider) throws OCKException {
         if (ockContext == null) {
             throw new IllegalArgumentException("context is null");
         }
@@ -188,17 +190,18 @@ public final class Digest implements Cloneable {
             throw new IllegalArgumentException("digestAlgo is null/empty");
         }
 
-        return new Digest(ockContext, digestAlgo);
+        return new Digest(ockContext, digestAlgo, provider);
     }
 
-    private Digest(OCKContext ockContext, String digestAlgo) throws OCKException {
+    private Digest(OCKContext ockContext, String digestAlgo, OpenJCEPlusProvider provider) throws OCKException {
         //final String methodName = "Digest(String)";
         this.ockContext = ockContext;
         this.digestAlgo = digestAlgo;
+        this.provider = provider;
         getContext();
         //OCKDebug.Msg(debPrefix, methodName,  "digestAlgo :" + digestAlgo);
 
-        OpenJCEPlusProvider.registerCleanable(this, cleanOCKResources(digestId, algIndx,
+        this.provider.registerCleanable(this, cleanOCKResources(digestId, algIndx,
             contextFromQueue, needsReinit, ockContext));
     }
 
@@ -343,6 +346,7 @@ public final class Digest implements Cloneable {
         copy.needsReinit = this.needsReinit;
         copy.ockContext = this.ockContext;
         copy.contextFromQueue = false;
+        copy.provider = this.provider;
 
         // Allocate a new context for the digestId and copy all state information from our
         // original context into the copy. 
@@ -360,12 +364,12 @@ public final class Digest implements Cloneable {
             throw new CloneNotSupportedException(stackTrace);
         }
 
-        OpenJCEPlusProvider.registerCleanable(copy, cleanOCKResources(copy.digestId, copy.algIndx,
+        this.provider.registerCleanable(copy, cleanOCKResources(copy.digestId, copy.algIndx,
             copy.contextFromQueue, copy.needsReinit, copy.ockContext));
         return copy;
     }
 
-    private static Runnable cleanOCKResources(long digestId, int algIndx, boolean contextFromQueue,
+    private Runnable cleanOCKResources(long digestId, int algIndx, boolean contextFromQueue,
             boolean needsReinit, OCKContext ockContext) {
         return () -> {
             try {
