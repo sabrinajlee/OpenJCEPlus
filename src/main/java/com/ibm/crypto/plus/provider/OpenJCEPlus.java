@@ -48,6 +48,7 @@ public final class OpenJCEPlus extends OpenJCEPlusProvider {
             + "                                       , HmacSHA3-224, HmacSHA3-256, HmacSHA3-384, HmacSHA3-512\n"
             + "Message digest                     : MD5, SHA-1, SHA-224, SHA-256, SHA-384, SHA-512, SHA-512/224, SHA-512/256, SHA3-224, SHA3-256, SHA3-384, SHA3-512\n"
             + "Secret key factory                 : AES, ChaCha20, DESede, PBKDF2WithHmacSHA1, PBKDF2WithHmacSHA224, PBKDF2WithHmacSHA256, PBKDF2WithHmacSHA384, PBKDF2WithHmacSHA512\n"
+            + "                                       PBKDF2WithHmacSHA512/224, PBKDF2WithHmacSHA512/256\n"
             + "Secure random                      : HASHDRBG, SHA256DRBG, SHA512DRBG\n"
             + "Signature algorithms               : NONEwithDSA, SHA1withDSA, SHA224withDSA, SHA256withDSA,\n"
             + "                                       SHA3-224withDSA, SHA3-256withDSA, SHA3-384withDSA, SHA3-512withDSA,\n"
@@ -678,32 +679,32 @@ public final class OpenJCEPlus extends OpenJCEPlusProvider {
 
         // SHA512-224
         aliases = new String[] {"SHA512/224", "OID.2.16.840.1.101.3.4.2.5",
-                "2.16.840.1.101.3.4.2.5",};
+                "2.16.840.1.101.3.4.2.5", };
         putService(new OpenJCEPlusService(jce, "MessageDigest", "SHA-512/224",
                 "com.ibm.crypto.plus.provider.MessageDigest$SHA512_224", aliases));
 
         // SHA512-256
         aliases = new String[] {"SHA512/256", "OID.2.16.840.1.101.3.4.2.6",
-                "2.16.840.1.101.3.4.2.6",};
+                "2.16.840.1.101.3.4.2.6", };
         putService(new OpenJCEPlusService(jce, "MessageDigest", "SHA-512/256",
                 "com.ibm.crypto.plus.provider.MessageDigest$SHA512_256", aliases));
 
         //SHA3 Hashes
 
         aliases = new String[] {"SHA3-224", "OID.2.16.840.1.101.3.4.2.7",
-                "2.16.840.1.101.3.4.2.7",};
+                "2.16.840.1.101.3.4.2.7", };
         putService(new OpenJCEPlusService(jce, "MessageDigest", "SHA3-224",
                 "com.ibm.crypto.plus.provider.MessageDigest$SHA3_224", aliases));
         aliases = new String[] {"SHA3-256", "OID.2.16.840.1.101.3.4.2.8",
-                "2.16.840.1.101.3.4.2.8",};
+                "2.16.840.1.101.3.4.2.8", };
         putService(new OpenJCEPlusService(jce, "MessageDigest", "SHA3-256",
                 "com.ibm.crypto.plus.provider.MessageDigest$SHA3_256", aliases));
         aliases = new String[] {"SHA3-384", "OID.2.16.840.1.101.3.4.2.9",
-                "2.16.840.1.101.3.4.2.9",};
+                "2.16.840.1.101.3.4.2.9", };
         putService(new OpenJCEPlusService(jce, "MessageDigest", "SHA3-384",
                 "com.ibm.crypto.plus.provider.MessageDigest$SHA3_384", aliases));
         aliases = new String[] {"SHA3-512", "OID.2.16.840.1.101.3.4.2.10",
-                "2.16.840.1.101.3.4.2.10",};
+                "2.16.840.1.101.3.4.2.10", };
         putService(new OpenJCEPlusService(jce, "MessageDigest", "SHA3-512",
                 "com.ibm.crypto.plus.provider.MessageDigest$SHA3_512", aliases));
 
@@ -765,6 +766,20 @@ public final class OpenJCEPlus extends OpenJCEPlusProvider {
                                      "SecretKeyFactory",
                                      "PBKDF2WithHmacSHA512",
                                      "com.ibm.crypto.plus.provider.PBKDF2Core$HmacSHA512",
+                                     aliases));
+        
+        aliases = null;
+        putService(new OpenJCEPlusService(jce,
+                                     "SecretKeyFactory",
+                                     "PBKDF2WithHmacSHA512/224",
+                                     "com.ibm.crypto.plus.provider.PBKDF2Core$HmacSHA512_224",
+                                     aliases));
+        
+        aliases = null;
+        putService(new OpenJCEPlusService(jce,
+                                     "SecretKeyFactory",
+                                     "PBKDF2WithHmacSHA512/256",
+                                     "com.ibm.crypto.plus.provider.PBKDF2Core$HmacSHA512_256",
                                      aliases));
 
         aliases = new String[] {"TripleDES", "3DES"};
@@ -924,22 +939,22 @@ public final class OpenJCEPlus extends OpenJCEPlusProvider {
                 "com.ibm.crypto.plus.provider.RSASignature$SHA512withRSA", aliases));
 
         aliases = new String[] {"OID.2.16.840.1.101.3.4.3.13", "2.16.840.1.101.3.4.3.13",
-                "SHA3-224/RSA", "SHA3-224withRSA",};
+                "SHA3-224/RSA", "SHA3-224withRSA", };
         putService(new OpenJCEPlusService(jce, "Signature", "SHA3-224withRSA",
                 "com.ibm.crypto.plus.provider.RSASignature$SHA3_224withRSA", aliases));
 
         aliases = new String[] {"OID.2.16.840.1.101.3.4.3.14", "2.16.840.1.101.3.4.3.14",
-                "SHA3-256/RSA", "SHA3-256withRSA",};
+                "SHA3-256/RSA", "SHA3-256withRSA", };
         putService(new OpenJCEPlusService(jce, "Signature", "SHA3-256withRSA",
                 "com.ibm.crypto.plus.provider.RSASignature$SHA3_256withRSA", aliases));
 
         aliases = new String[] {"OID.2.16.840.1.101.3.4.3.15", "2.16.840.1.101.3.4.3.15",
-                "SHA3-384/RSA", "SHA3-384withRSA",};
+                "SHA3-384/RSA", "SHA3-384withRSA", };
         putService(new OpenJCEPlusService(jce, "Signature", "SHA3-384withRSA",
                 "com.ibm.crypto.plus.provider.RSASignature$SHA3_384withRSA", aliases));
 
         aliases = new String[] {"OID.2.16.840.1.101.3.4.3.16", "2.16.840.1.101.3.4.3.16",
-                "SHA3-512/RSA", "SHA3-512withRSA",};
+                "SHA3-512/RSA", "SHA3-512withRSA", };
         putService(new OpenJCEPlusService(jce, "Signature", "SHA3-512withRSA",
                 "com.ibm.crypto.plus.provider.RSASignature$SHA3_512withRSA", aliases));
 
