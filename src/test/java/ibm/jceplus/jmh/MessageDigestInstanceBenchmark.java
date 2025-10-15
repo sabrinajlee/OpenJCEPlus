@@ -38,10 +38,10 @@ public class MessageDigestInstanceBenchmark extends JMHBase {
     @Param({"OpenJCEPlus", "SUN"})
     private String provider;
 
-    // private MessageDigest messageDigestSHA512;
-    // private MessageDigest messageDigestSHA256;
+    private MessageDigest messageDigestSHA512;
+    private MessageDigest messageDigestSHA256;
     private MessageDigest messageDigestMD5;
-    // private MessageDigest messageDigestSHA1;
+    private MessageDigest messageDigestSHA1;
     private byte[] payload;
     protected SecureRandom random = new SecureRandom();
 
