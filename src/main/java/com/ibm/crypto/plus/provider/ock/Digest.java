@@ -134,38 +134,6 @@ public final class Digest implements Cloneable {
         this.needsReinit = false;
     }
 
-    void releaseContext() throws OCKException {
-
-        if (this.digestId == 0) {
-            return;
-        }
-
-        // not SHA* algorithm
-        if (this.algIndx == -2) {
-            if (validId(this.digestId)) {
-                NativeInterface.DIGEST_delete(this.ockContext.getId(),
-                        this.digestId);
-                this.digestId = 0;
-            }
-        } else {
-            if (this.contextFromQueue) {
-                // reset now to make sure all contexts in the queue are ready to use
-                this.reset();
-                contexts[this.algIndx].add(this.digestId);
-                this.digestId = 0;
-                this.contextFromQueue = false;
-            } else {
-                // delete context
-                if (validId(this.digestId)) {
-                    NativeInterface.DIGEST_delete(this.ockContext.getId(),
-                            this.digestId);
-                    this.digestId = 0;
-                }
-            }
-        }
-        this.digestId = 0;
-    }
-
     /* end digest caching mechanism
      * ===========================================================================
      */
