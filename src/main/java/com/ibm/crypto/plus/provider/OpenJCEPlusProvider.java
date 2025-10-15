@@ -70,7 +70,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     }
 
     public void registerCleanable(Object owner, Runnable cleanAction) {
-        Cleaner cleaner = cleaners[Math.abs(count.getAndIncrement()) % numCleaners];
+        Cleaner cleaner = cleaners[Math.floorMod(count.getAndIncrement(), numCleaners)];
         cleaner.register(owner, cleanAction);
     }
 
