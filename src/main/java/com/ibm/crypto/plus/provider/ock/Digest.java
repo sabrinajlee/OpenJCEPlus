@@ -12,6 +12,7 @@ import com.ibm.crypto.plus.provider.OpenJCEPlusProvider;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import sun.security.util.Debug;
 
 public final class Digest implements Cloneable {
 
@@ -142,6 +143,9 @@ public final class Digest implements Cloneable {
     private int digestLength = 0;
     private final String badIdMsg = "Digest Identifier is not valid";
     private static final String debPrefix = "DIGEST";
+    private static final String DEBUG_VALUE = "jceplus";
+    private boolean isDebugSet = Debug.getInstance(DEBUG_VALUE) != null ? true : false;
+
 
     private String digestAlgo;
 
@@ -174,7 +178,7 @@ public final class Digest implements Cloneable {
         }
         
         this.provider.registerCleanable(this, cleanOCKResources(digestId, algIndx,
-            contextFromQueue, needsReinit, ockContext));
+            contextFromQueue, needsReinit, ockContext, isDebugSet));
     }
 
     private Digest() {
@@ -337,12 +341,12 @@ public final class Digest implements Cloneable {
         }
 
         this.provider.registerCleanable(copy, cleanOCKResources(copy.digestId, copy.algIndx,
-            copy.contextFromQueue, copy.needsReinit, copy.ockContext));
+            copy.contextFromQueue, copy.needsReinit, copy.ockContext, isDebugSet));
         return copy;
     }
 
     private Runnable cleanOCKResources(long digestId, int algIndx, boolean contextFromQueue,
-            boolean needsReinit, OCKContext ockContext) {
+            boolean needsReinit, OCKContext ockContext, boolean debug) {
         return () -> {
             try {
                 if (digestId == 0) {
@@ -365,7 +369,10 @@ public final class Digest implements Cloneable {
                     }
                 }
             } catch (OCKException e) {
-                e.printStackTrace();
+                if (debug) {
+                    System.out.println("An error occurred while cleaning : " + e.getMessage());
+                    e.printStackTrace();
+                }
             }
         };
     }
