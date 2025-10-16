@@ -345,6 +345,7 @@ public final class Digest implements Cloneable {
             boolean needsReinit, OCKContext ockContext, boolean debug) {
         return () -> {
             try {
+                System.out.println("----------------- VALUE OF needsReinit : " + needsReinit + " ----------");
                 if (digestId == 0) {
                     throw new OCKException("Digest Identifier is not valid");
                 }
