@@ -11,8 +11,8 @@ package com.ibm.crypto.plus.provider;
 import com.ibm.crypto.plus.provider.ock.OCKContext;
 import java.lang.ref.Cleaner;
 import java.security.ProviderException;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
+import sun.security.util.Debug;
 
 // Internal interface for OpenJCEPlus and OpenJCEPlus implementation classes.
 // Implemented as an abstract class rather than an interface so that 
@@ -42,6 +42,8 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     private AtomicInteger count = new AtomicInteger(0);
 
+    private static final boolean isDebugSet = Debug.getInstance(DEBUG_VALUE) != null ? true : false;
+
     OpenJCEPlusProvider(String name, String info) {
         super(name, PROVIDER_VER, info);
 
@@ -52,7 +54,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
         cleaners = new Cleaner[numCleaners];
         for (int i = 0; i < numCleaners; i++) {
-            final Cleaner cleaner = Cleaner.create(new CleanerThreadFactory());
+            final Cleaner cleaner = Cleaner.create();
             cleaners[i] = cleaner;
         }
     }
@@ -74,6 +76,10 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
         cleaner.register(owner, cleanAction);
     }
 
+    public boolean getDebug() {
+        return isDebugSet;
+    }
+    
     // Get OCK context for crypto operations
     //
     abstract OCKContext getOCKContext();
@@ -106,14 +112,4 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
     abstract ProviderException providerException(String message, Throwable ockException);
 
     abstract void setOCKExceptionCause(Exception exception, Throwable ockException);
-
-    private static class CleanerThreadFactory implements ThreadFactory {
-
-        @Override
-        public Thread newThread(Runnable r) {
-            Thread thread = new Thread(r);
-            return thread;
-        }
-
-    }
 }

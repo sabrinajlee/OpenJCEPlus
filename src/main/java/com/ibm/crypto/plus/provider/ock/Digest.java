@@ -12,7 +12,6 @@ import com.ibm.crypto.plus.provider.OpenJCEPlusProvider;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import sun.security.util.Debug;
 
 public final class Digest implements Cloneable {
 
@@ -28,7 +27,7 @@ public final class Digest implements Cloneable {
     // -2   : Not a SHA* digest algorithm
     private int algIndx = -1;
 
-    private boolean needsReinit = false;
+    private BoolWrapper needsReinit = new BoolWrapper(false);
 
     private boolean contextFromQueue = false;
 
@@ -132,20 +131,32 @@ public final class Digest implements Cloneable {
                 this.contextFromQueue = true;
             }
         }
-        this.needsReinit = false;
+        this.needsReinit.setValue(false);
     }
 
     /* end digest caching mechanism
      * ===========================================================================
      */
 
+    public class BoolWrapper {
+        boolean value;
+        public BoolWrapper(boolean value) {
+            this.value = value;
+        }
+
+        public boolean getValue(){
+            return this.value;
+        }
+
+        public void setValue(boolean value) {
+            this.value = value;
+        }
+    }
+
     private OCKContext ockContext = null;
     private int digestLength = 0;
     private final String badIdMsg = "Digest Identifier is not valid";
     private static final String debPrefix = "DIGEST";
-    private static final String DEBUG_VALUE = "jceplus";
-    private boolean isDebugSet = Debug.getInstance(DEBUG_VALUE) != null ? true : false;
-
 
     private String digestAlgo;
 
@@ -178,7 +189,7 @@ public final class Digest implements Cloneable {
         }
         
         this.provider.registerCleanable(this, cleanOCKResources(digestId, algIndx,
-            contextFromQueue, needsReinit, ockContext, isDebugSet));
+            contextFromQueue, needsReinit, ockContext, this.provider.getDebug()));
     }
 
     private Digest() {
@@ -221,7 +232,7 @@ public final class Digest implements Cloneable {
         if (errorCode < 0) {
             throwOCKException(errorCode);
         }
-        this.needsReinit = true;
+        this.needsReinit.setValue(true);
     }
 
     public synchronized byte[] digest() throws OCKException {
@@ -243,7 +254,7 @@ public final class Digest implements Cloneable {
         if (errorCode < 0) {
             throwOCKException(errorCode);
         }
-        this.needsReinit = false;
+        this.needsReinit.setValue(false);
 
         return digestBytes;
     }
@@ -275,10 +286,10 @@ public final class Digest implements Cloneable {
         if (!validId(this.digestId)) {
             throw new OCKException(badIdMsg);
         }
-        if (this.needsReinit) {
+        if (this.needsReinit.getValue() == true) {
             NativeInterface.DIGEST_reset(this.ockContext.getId(), this.digestId);
         }
-        this.needsReinit = false;
+        this.needsReinit.setValue(false);;
     }
 
     private synchronized void obtainDigestLength() throws OCKException {
@@ -319,7 +330,7 @@ public final class Digest implements Cloneable {
         copy.digestLength = this.digestLength;
         copy.algIndx = this.algIndx;
         copy.digestAlgo = new String(this.digestAlgo);
-        copy.needsReinit = this.needsReinit;
+        copy.needsReinit.setValue(this.needsReinit.getValue());
         copy.ockContext = this.ockContext;
         copy.contextFromQueue = false;
         copy.provider = this.provider;
@@ -341,12 +352,12 @@ public final class Digest implements Cloneable {
         }
 
         this.provider.registerCleanable(copy, cleanOCKResources(copy.digestId, copy.algIndx,
-            copy.contextFromQueue, copy.needsReinit, copy.ockContext, isDebugSet));
+            copy.contextFromQueue, copy.needsReinit, copy.ockContext, this.provider.getDebug()));
         return copy;
     }
 
     private Runnable cleanOCKResources(long digestId, int algIndx, boolean contextFromQueue,
-            boolean needsReinit, OCKContext ockContext, boolean debug) {
+            BoolWrapper needsReinit, OCKContext ockContext, boolean debug) {
         return () -> {
             try {
                 if (digestId == 0) {
@@ -360,7 +371,7 @@ public final class Digest implements Cloneable {
                 } else {
                     if (contextFromQueue) {
                         // reset now to make sure all contexts in the queue are ready to use
-                        if (needsReinit) {
+                        if (needsReinit.getValue()) {
                             NativeInterface.DIGEST_reset(ockContext.getId(), digestId);
                         }
                         Digest.contexts[algIndx].add(digestId);
