@@ -322,6 +322,7 @@ public final class Digest implements Cloneable {
         //final String methodName = "finalize";
 
         try {
+            System.out.println("----------------- VALUE OF needsReinit : " + needsReinit + " ----------");
             //OCKDebug.Msg(debPrefix, methodName,  "digestId =" + this.digestId);
             releaseContext();
         } finally {
