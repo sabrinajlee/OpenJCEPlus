@@ -12,7 +12,6 @@ import com.ibm.crypto.plus.provider.OpenJCEPlusProvider;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import sun.security.util.Debug;
 
 public final class Digest implements Cloneable {
 
@@ -143,9 +142,6 @@ public final class Digest implements Cloneable {
     private int digestLength = 0;
     private final String badIdMsg = "Digest Identifier is not valid";
     private static final String debPrefix = "DIGEST";
-    private static final String DEBUG_VALUE = "jceplus";
-    private boolean isDebugSet = Debug.getInstance(DEBUG_VALUE) != null ? true : false;
-
 
     private String digestAlgo;
 
@@ -178,7 +174,7 @@ public final class Digest implements Cloneable {
         }
         
         this.provider.registerCleanable(this, cleanOCKResources(digestId, algIndx,
-            contextFromQueue, needsReinit, ockContext, isDebugSet));
+            contextFromQueue, needsReinit, ockContext, this.provider.getDebug()));
     }
 
     private Digest() {
@@ -341,7 +337,7 @@ public final class Digest implements Cloneable {
         }
 
         this.provider.registerCleanable(copy, cleanOCKResources(copy.digestId, copy.algIndx,
-            copy.contextFromQueue, copy.needsReinit, copy.ockContext, isDebugSet));
+            copy.contextFromQueue, copy.needsReinit, copy.ockContext, this.provider.getDebug()));
         return copy;
     }
 
