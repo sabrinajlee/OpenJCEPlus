@@ -43,7 +43,7 @@ public abstract class OpenJCEPlusProvider extends java.security.Provider {
 
     private AtomicInteger count = new AtomicInteger(0);
 
-    private static final boolean isDebugSet = Debug.getInstance(DEBUG_VALUE) != null ? true : false;
+    private final boolean isDebugSet = Debug.getInstance(DEBUG_VALUE) != null ? true : false;
 
     OpenJCEPlusProvider(String name, String info) {
         super(name, PROVIDER_VER, info);
