@@ -342,7 +342,7 @@ public final class Digest implements Cloneable {
     }
 
     private Runnable cleanOCKResources(long digestId, int algIndx, boolean contextFromQueue,
-            Bolean needsReinit, OCKContext ockContext, boolean debug) {
+            Boolean needsReinit, OCKContext ockContext, boolean debug) {
         return () -> {
             try {
                 System.err.println("-------VALUE OF needsReinit : " + needsReinit + " --------");
