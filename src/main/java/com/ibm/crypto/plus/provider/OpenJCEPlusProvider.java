@@ -11,7 +11,6 @@ package com.ibm.crypto.plus.provider;
 import com.ibm.crypto.plus.provider.ock.OCKContext;
 import java.lang.ref.Cleaner;
 import java.security.ProviderException;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import sun.security.util.Debug;
 
