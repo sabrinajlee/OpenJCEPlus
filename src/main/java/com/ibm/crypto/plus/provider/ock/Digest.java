@@ -12,7 +12,6 @@ import com.ibm.crypto.plus.provider.OpenJCEPlusProvider;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import sun.security.util.Debug;
 
 public final class Digest implements Cloneable {
 
@@ -182,8 +181,6 @@ public final class Digest implements Cloneable {
 
     static final String DEBUG_VALUE = "jceplus";
 
-    private static Debug debug = Debug.getInstance(DEBUG_VALUE);
-
     private OpenJCEPlusProvider provider;
 
     public static Digest getInstance(OCKContext ockContext, String digestAlgo, OpenJCEPlusProvider provider) throws OCKException {
@@ -211,7 +208,7 @@ public final class Digest implements Cloneable {
         }
         
         this.provider.registerCleanable(this, cleanOCKResources(digestId, algIndx,
-            contextFromQueue, needsReinit, ockContext, debug));
+            contextFromQueue, needsReinit, ockContext, this.provider.getDebug()));
     }
 
     private Digest() {
@@ -374,12 +371,12 @@ public final class Digest implements Cloneable {
         }
 
         this.provider.registerCleanable(copy, cleanOCKResources(copy.digestId, copy.algIndx,
-            copy.contextFromQueue, copy.needsReinit, copy.ockContext, debug));
+            copy.contextFromQueue, copy.needsReinit, copy.ockContext, this.provider.getDebug()));
         return copy;
     }
 
     private Runnable cleanOCKResources(long digestId, int algIndx, boolean contextFromQueue,
-            boolean needsReinit, OCKContext ockContext, Debug debug) {
+            boolean needsReinit, OCKContext ockContext, boolean debug) {
         return () -> {
             try {
                 if (digestId == 0) {
@@ -402,7 +399,7 @@ public final class Digest implements Cloneable {
                     }
                 }
             } catch (OCKException e) {
-                if (debug != null) {
+                if (debug) {
                     System.out.println("An error occurred while cleaning: " + e.getMessage());
                     e.printStackTrace();
                 }
