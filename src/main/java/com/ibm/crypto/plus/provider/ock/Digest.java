@@ -342,7 +342,7 @@ public final class Digest implements Cloneable {
     }
 
     private Runnable cleanOCKResources(long digestId, int algIndx, boolean contextFromQueue,
-            boolean needsReinit, OCKContext ockContext, boolean debug) {
+            Bolean needsReinit, OCKContext ockContext, boolean debug) {
         return () -> {
             try {
                 if (digestId == 0) {
