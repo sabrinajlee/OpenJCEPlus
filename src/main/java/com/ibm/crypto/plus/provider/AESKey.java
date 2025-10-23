@@ -44,6 +44,8 @@ final class AESKey implements SecretKey {
         this.key = new byte[key.length];
         this.provider = provider;
         System.arraycopy(key, 0, this.key, 0, key.length);
+
+        this.provider.registerCleanable(this, cleanOCKResources(key));
     }
 
     @Override
@@ -151,21 +153,14 @@ final class AESKey implements SecretKey {
         }
     }
 
-    /**
-     * This function zeroizes the key so that it isn't in memory when GC is
-     * done.
-     */
-    @Override
-    protected void finalize() throws Throwable {
-        try {
+    private Runnable cleanOCKResources(byte[] key) {
+        return () -> {
             synchronized (this) {
                 if (this.key != null) {
                     Arrays.fill(this.key, (byte) 0x00);
                     this.key = null;
                 }
             }
-        } finally {
-            super.finalize();
-        }
+        };
     }
 }
