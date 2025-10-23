@@ -228,6 +228,7 @@
                     <!-- Could add -Djava.security.auth.debug=all for debug -->
                     <argLine>
                       @{argLine}
+                      -Djava.security.auth.debug=all
                       --add-exports=java.base/sun.security.internal.interfaces=ALL-UNNAMED
                       --add-exports=java.base/sun.security.internal.interfaces=openjceplus
                       --add-exports=java.base/sun.security.internal.spec=ALL-UNNAMED
