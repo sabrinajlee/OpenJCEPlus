@@ -148,6 +148,8 @@ public final class AESGCMCipher extends CipherSpi implements AESConstants, GCMCo
             throw provider.providerException("Failed to initialize cipher context", e);
         }
         buffer = new byte[AES_BLOCK_SIZE * 2];
+
+        this.provider.registerCleanable(this, cleanOCKResources(Key));
     }
 
 
@@ -1417,22 +1419,7 @@ public final class AESGCMCipher extends CipherSpi implements AESConstants, GCMCo
         diffBlocksize = blockSize;
     }
 
-    @Override
-    protected synchronized void finalize() throws Throwable {
-        //final String methodName = "finalize";
-        // OCKDebug.Msg (debPrefix, methodName, "finalize called");
-        try {
-
-            //JS00684 - Leave cleanup of internal variables to GCMCipher that caches them
-            if (Key != null) {
-                Arrays.fill(Key, (byte) 0x00);
-                Key = null;
-            }
-        } finally {
-            super.finalize();
-        }
-    }
-
+    
     private void checkReinit() {
         if (requireReinit) {
             throw new IllegalStateException(
@@ -1470,5 +1457,21 @@ public final class AESGCMCipher extends CipherSpi implements AESConstants, GCMCo
         sbeInLastUpdateEncrypt = false;
         this.buffered = 0;
         Arrays.fill(buffer, (byte) 0x0);
+    }
+
+    private Runnable cleanOCKResources(byte[] Key) {
+        return () -> {
+            // try {
+            // //JS00684 - Leave cleanup of internal variables to GCMCipher that caches them
+            // } catch (OCKException e) {
+            //     if (OpenJCEPlusProvider.getDebug() != null) {
+            //         OpenJCEPlusProvider.getDebug().println("An error occurred while cleaning : " + e.getMessage());
+            //         e.printStackTrace();
+            //     }
+            // }
+            if (Key != null) {
+                    Arrays.fill(Key, (byte) 0x00);
+            }
+        };
     }
 }
