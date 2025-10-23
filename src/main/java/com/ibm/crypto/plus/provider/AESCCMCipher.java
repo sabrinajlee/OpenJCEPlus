@@ -10,6 +10,7 @@ package com.ibm.crypto.plus.provider;
 
 import com.ibm.crypto.plus.provider.ock.CCMCipher;
 import com.ibm.crypto.plus.provider.ock.OCKContext;
+import com.ibm.crypto.plus.provider.ock.OCKException;
 import ibm.security.internal.spec.CCMParameterSpec;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -30,7 +31,6 @@ import javax.crypto.CipherSpi;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.ShortBufferException;
-import sun.security.util.Debug;
 
 public final class AESCCMCipher extends CipherSpi implements AESConstants, CCMConstants {
 
@@ -52,8 +52,6 @@ public final class AESCCMCipher extends CipherSpi implements AESConstants, CCMCo
     private byte[] Key = null;
     private byte[] authData = null;
     private boolean updateCalled = false;
-    // User enabled debugging
-    private static Debug debug = Debug.getInstance(OpenJCEPlusProvider.DEBUG_VALUE);
 
     /*
      * index of the content size left in the buffer
@@ -111,6 +109,8 @@ public final class AESCCMCipher extends CipherSpi implements AESConstants, CCMCo
             throw provider.providerException("Failed to initialize cipher context", e);
         }
         buffer = new byte[AES_BLOCK_SIZE * 2];
+
+        this.provider.registerCleanable(this, cleanOCKResources(Key, ockContext));
     }
 
 
@@ -738,24 +738,6 @@ public final class AESCCMCipher extends CipherSpi implements AESConstants, CCMCo
     }
 
 
-    @Override
-    protected synchronized void finalize() throws Throwable {
-        //final String methodName = "finalize";
-        // OCKDebug.Msg (debPrefix, methodName, "finalize called");
-        try {
-            if (ockContext != null) {
-                CCMCipher.doCCM_cleanup(ockContext);
-            }
-            if (Key != null) {
-                Arrays.fill(Key, (byte) 0x00);
-                Key = null;
-            }
-        } finally {
-            super.finalize();
-        }
-    }
-
-
     private void checkReinit() {
         if (requireReinit) {
             throw new IllegalStateException(
@@ -793,6 +775,25 @@ public final class AESCCMCipher extends CipherSpi implements AESConstants, CCMCo
     protected int engineUpdate(ByteBuffer input, ByteBuffer output) throws ShortBufferException {
         throw new ProviderException(
                 "engineUpdate is not supported for AESCCM.  Only engineDoFinal is supported.");
+    }
+
+
+    private Runnable cleanOCKResources(byte[] Key, OCKContext ockContext) {
+        return () -> {
+            try {
+                if (ockContext != null) {
+                    CCMCipher.doCCM_cleanup(ockContext);
+                }
+            } catch (OCKException e) {
+                if (OpenJCEPlus.getDebug() != null) {
+                    OpenJCEPlus.getDebug().println("An error occurred while cleaning : " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+            if (Key != null) {
+                    Arrays.fill(Key, (byte) 0x00);
+            }
+        };
     }
 
 } // End of class
