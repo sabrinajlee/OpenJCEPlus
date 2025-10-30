@@ -8,10 +8,9 @@
 
 package com.ibm.crypto.plus.provider.ock;
 
+import com.ibm.crypto.plus.provider.OpenJCEPlusProvider;
 import java.math.BigInteger;
 import java.util.Arrays;
-
-import com.ibm.crypto.plus.provider.OpenJCEPlusProvider;
 
 public final class RSAKey implements AsymmetricKey {
 
