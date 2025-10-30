@@ -7,6 +7,7 @@
  */
 package ibm.jceplus.junit.base;
 
+import com.ibm.crypto.plus.provider.OpenJCEPlusProvider;
 import ibm.security.internal.spec.RawKeySpec;
 import java.io.IOException;
 import java.security.InvalidKeyException;
@@ -146,9 +147,10 @@ public class BaseTestPQCKeys extends BaseTestJunit5 {
         byte[] pubKey = HexFormat.of().parseHex(pubBytes);
 
         pqcKeyFactory = KeyFactory.getInstance(Algorithm, getProviderName());
-        
-        RawKeySpec pubSpec = new RawKeySpec(pubKey);
-        RawKeySpec privSpec = new RawKeySpec(privKey);
+
+        OpenJCEPlusProvider provider = (OpenJCEPlusProvider) pqcKeyFactory.getProvider();
+        RawKeySpec pubSpec = new RawKeySpec(pubKey, provider);
+        RawKeySpec privSpec = new RawKeySpec(privKey, provider);
 
         PublicKey publicKey = pqcKeyFactory.generatePublic(pubSpec);
         PrivateKey privateKey = pqcKeyFactory.generatePrivate(privSpec);
