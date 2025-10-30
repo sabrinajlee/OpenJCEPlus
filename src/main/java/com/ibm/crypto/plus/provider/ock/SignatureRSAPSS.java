@@ -1,5 +1,5 @@
 /*
- * Copyright IBM Corp. 2023
+ * Copyright IBM Corp. 2023, 2025
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms provided by IBM in the LICENSE file that accompanied
@@ -8,6 +8,7 @@
 
 package com.ibm.crypto.plus.provider.ock;
 
+import com.ibm.crypto.plus.provider.OpenJCEPlusProvider;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.InvalidParameterException;
@@ -18,6 +19,7 @@ public final class SignatureRSAPSS {
         INITSIGN, INITVERIFY
     };
 
+    private OpenJCEPlusProvider provider;
     private OCKContext ockContext = null;
     private long rsaPssId = 0;
     private AsymmetricKey key = null;
@@ -33,16 +35,20 @@ public final class SignatureRSAPSS {
 
 
     public static SignatureRSAPSS getInstance(OCKContext ockContext, String digestAlgo, int saltlen,
-            int trailerField, String mgfAlgo, String mgf1SpecAlgo) throws OCKException {
+            int trailerField, String mgfAlgo, String mgf1SpecAlgo, OpenJCEPlusProvider provider) throws OCKException {
         if (ockContext == null) {
             throw new IllegalArgumentException("context is null");
         }
+
+        if (provider == null) {
+            throw new IllegalArgumentException("provider is null");
+        }
         return new SignatureRSAPSS(ockContext, digestAlgo, saltlen, trailerField, mgfAlgo,
-                mgf1SpecAlgo);
+                mgf1SpecAlgo, provider);
     }
 
     private SignatureRSAPSS(OCKContext ockContext, String digestAlgo, int saltlen, int trailerField,
-            String mgfAlgo, String mgf1SpecAlgo) throws OCKException {
+            String mgfAlgo, String mgf1SpecAlgo, OpenJCEPlusProvider provider) throws OCKException {
 
         this.ockContext = ockContext;
         this.saltlen = saltlen;
@@ -50,6 +56,9 @@ public final class SignatureRSAPSS {
         this.mgfAlgo = mgfAlgo;
         this.mgf1SpecAlgo = mgf1SpecAlgo;
         this.digestAlgo = digestAlgo;
+        this.provider = provider;
+
+        this.provider.registerCleanable(this, cleanOCKResources(rsaPssId, ockContext));
     }
 
     public synchronized void setParameter(String digestAlgo, int saltlen, int trailerField,
@@ -253,19 +262,18 @@ public final class SignatureRSAPSS {
         }
     }
 
-    //
-    @Override
-    protected synchronized void finalize() throws Throwable {
-        //final String methodName = "finalize";
-
-        try {
-            if (rsaPssId != 0) {
-                NativeInterface.RSAPSS_releaseContext(ockContext.getId(), rsaPssId);
-                rsaPssId = 0;
-            }
-        } finally {
-            super.finalize();
-        }
+    private Runnable cleanOCKResources(long rsaPssId, OCKContext ockContext) {
+        return() -> {
+            try {
+                if (rsaPssId != 0) {
+                    NativeInterface.RSAPSS_releaseContext(ockContext.getId(), rsaPssId);
+                }
+            } catch (Exception e) {
+                if (OpenJCEPlusProvider.getDebug() != null) {
+                    OpenJCEPlusProvider.getDebug().println("An error occurred while cleaning : " + e.getMessage());
+                    e.printStackTrace();
+                }
+            } 
+        };
     }
-
 }

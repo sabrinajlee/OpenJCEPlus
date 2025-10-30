@@ -45,6 +45,7 @@ class PQCKeyFactory extends KeyFactorySpi {
                 return generated;
             } else if (keySpec instanceof RawKeySpec) {
                 RawKeySpec rks = RawKeySpec.class.cast(keySpec);
+                rks.registerToCleaner(provider);
                 byte[] bytes = rks.getKeyArr();
                 if (checkEncoded(bytes, false)) {
                     throw new InvalidKeySpecException("Key spec does not match Spec indicated");   
@@ -80,6 +81,7 @@ class PQCKeyFactory extends KeyFactorySpi {
                 return generated;
             } else if (keySpec instanceof RawKeySpec) {
                 RawKeySpec rks = RawKeySpec.class.cast(keySpec);
+                rks.registerToCleaner(provider);
                 byte[] bytes = rks.getKeyArr(); 
                 if (checkEncoded(bytes, true)) {
                     throw new InvalidKeySpecException("Key does not match Spec indicated");   
