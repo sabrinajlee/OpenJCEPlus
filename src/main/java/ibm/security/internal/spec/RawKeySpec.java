@@ -9,6 +9,7 @@
 package ibm.security.internal.spec;
 
 import com.ibm.crypto.plus.provider.OpenJCEPlusProvider;
+import java.lang.ref.Cleaner;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
 
@@ -19,13 +20,14 @@ import java.util.Arrays;
  * new PQC algs the bytes are defined as byte arrays.
  */
 public class RawKeySpec implements KeySpec {
-    private OpenJCEPlusProvider provider;
+    static private Cleaner cleaner = Cleaner.create();
     private byte[] keyBytes = null;
     /**
      * @param key contains the key as a byte array
      */
     public RawKeySpec(byte[] key) {
         keyBytes = key.clone();
+        cleaner.register(this, cleanOCKResources(keyBytes));
     }
 
     /**
@@ -33,11 +35,6 @@ public class RawKeySpec implements KeySpec {
      */
     public byte[] getKeyArr() {
         return keyBytes.clone();
-    }
-
-    public void registerToCleaner(OpenJCEPlusProvider provider) {
-        this.provider = provider;
-        this.provider.registerCleanable(this, cleanOCKResources(keyBytes));
     }
 
     private Runnable cleanOCKResources(byte[] keyBytes) {
