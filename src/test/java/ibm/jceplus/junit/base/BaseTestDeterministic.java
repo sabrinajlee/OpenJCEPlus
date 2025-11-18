@@ -20,6 +20,7 @@ import java.security.Security;
 import java.security.Signature;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.DSAParameterSpec;
+import java.security.spec.MGF1ParameterSpec;
 import java.security.spec.PSSParameterSpec;
 import java.util.Arrays;
 import java.util.Objects;
@@ -159,7 +160,8 @@ public class BaseTestDeterministic extends BaseTestJunit5 {
     }
 
     private static void testSignature(Provider.Service s) throws Exception {
-        System.out.println(s.getProvider().getName() + " " + s.getType() + "." + s.getAlgorithm());
+        System.err.println("------ here ----------");
+        System.err.println("provider: "+s.getProvider().getName() + ", type: " + s.getType() + ", algorithm: " + s.getAlgorithm());
         String keyAlg = s.getAlgorithm();
         String keyProvider = s.getProvider().getName();
 
@@ -194,6 +196,7 @@ public class BaseTestDeterministic extends BaseTestJunit5 {
         var sig = Signature.getInstance(s.getAlgorithm(), s.getProvider());
         try {
             if (keyAlg.equals("RSASSA-PSS")) {
+                System.err.println("--  -- inside if statement");
                 sig.setParameter(PSSParameterSpec.DEFAULT);
             }
             sig.initSign(sk, new SeededSecureRandom(SEED));
