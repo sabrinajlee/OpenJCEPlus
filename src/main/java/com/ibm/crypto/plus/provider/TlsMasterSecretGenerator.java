@@ -1,65 +1,82 @@
 /*
- * Copyright IBM Corp. 2023, 2025
+ * Copyright (c) 2005, 2023, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
- * under the terms provided by IBM in the LICENSE file that accompanied
- * this code, including the "Classpath" Exception described therein.
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
-package com.ibm.crypto.plus.provider;
+package com.sun.crypto.provider;
 
-import java.security.DigestException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidParameterException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.ProviderException;
-import java.security.SecureRandom;
+import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.security.*;
 import java.security.spec.AlgorithmParameterSpec;
-import java.util.Arrays;
-import javax.crypto.KeyGeneratorSpi;
-import javax.crypto.SecretKey;
-import static com.ibm.crypto.plus.provider.TlsPrfGenerator.LABEL_EXTENDED_MASTER_SECRET;
-import static com.ibm.crypto.plus.provider.TlsPrfGenerator.LABEL_MASTER_SECRET;
-import static com.ibm.crypto.plus.provider.TlsPrfGenerator.SSL3_CONST;
-import static com.ibm.crypto.plus.provider.TlsPrfGenerator.concat;
-import static com.ibm.crypto.plus.provider.TlsPrfGenerator.doTLS10PRF;
-import static com.ibm.crypto.plus.provider.TlsPrfGenerator.doTLS12PRF;
+
+import javax.crypto.*;
+
+import sun.security.internal.interfaces.TlsMasterSecret;
+import sun.security.internal.spec.TlsMasterSecretParameterSpec;
+
+import static com.sun.crypto.provider.TlsPrfGenerator.*;
 
 /**
  * KeyGenerator implementation for the SSL/TLS master secret derivation.
+ *
+ * @author  Andreas Sterbenz
+ * @since   1.6
  */
 public final class TlsMasterSecretGenerator extends KeyGeneratorSpi {
 
-    private final static String MSG = "TlsMasterSecretGenerator must be "
-            + "initialized using a TlsMasterSecretParameterSpec";
+    private static final String MSG = "TlsMasterSecretGenerator must be "
+        + "initialized using a TlsMasterSecretParameterSpec";
 
-    private OpenJCEPlusProvider provider = null;
-    private sun.security.internal.spec.TlsMasterSecretParameterSpec spec;
+    @SuppressWarnings("deprecation")
+    private TlsMasterSecretParameterSpec spec;
 
     private int protocolVersion;
 
-    public TlsMasterSecretGenerator(OpenJCEPlusProvider provider) {
-        this.provider = provider;
+    public TlsMasterSecretGenerator() {
     }
 
     protected void engineInit(SecureRandom random) {
         throw new InvalidParameterException(MSG);
     }
 
-    protected void engineInit(AlgorithmParameterSpec params, SecureRandom random)
-            throws InvalidAlgorithmParameterException {
-        if (params instanceof sun.security.internal.spec.TlsMasterSecretParameterSpec == false) {
+    @SuppressWarnings("deprecation")
+    protected void engineInit(AlgorithmParameterSpec params,
+            SecureRandom random) throws InvalidAlgorithmParameterException {
+        if (!(params instanceof TlsMasterSecretParameterSpec)) {
             throw new InvalidAlgorithmParameterException(MSG);
         }
-        this.spec = (sun.security.internal.spec.TlsMasterSecretParameterSpec) params;
-
-        if ("RAW".equals(spec.getPremasterSecret().getFormat()) == false) {
-            throw new InvalidAlgorithmParameterException("Key format must be RAW");
+        this.spec = (TlsMasterSecretParameterSpec)params;
+        if (!"RAW".equals(spec.getPremasterSecret().getFormat())) {
+            throw new InvalidAlgorithmParameterException(
+                "Key format must be RAW");
         }
-        protocolVersion = (spec.getMajorVersion() << 8) | spec.getMinorVersion();
+        protocolVersion = (spec.getMajorVersion() << 8)
+            | spec.getMinorVersion();
         if ((protocolVersion < 0x0300) || (protocolVersion > 0x0303)) {
-            throw new InvalidAlgorithmParameterException("Only SSL 3.0, TLS 1.0/1.1/1.2 supported");
+            throw new InvalidAlgorithmParameterException(
+                "Only SSL 3.0, TLS 1.0/1.1/1.2 supported");
         }
     }
 
@@ -69,10 +86,10 @@ public final class TlsMasterSecretGenerator extends KeyGeneratorSpi {
 
     protected SecretKey engineGenerateKey() {
         if (spec == null) {
-            throw new IllegalStateException("TlsMasterSecretGenerator must be initialized");
+            throw new IllegalStateException(
+                "TlsMasterSecretGenerator must be initialized");
         }
         SecretKey premasterKey = spec.getPremasterSecret();
-
         byte[] premaster = premasterKey.getEncoded();
 
         int premasterMajor, premasterMinor;
@@ -81,60 +98,39 @@ public final class TlsMasterSecretGenerator extends KeyGeneratorSpi {
             premasterMajor = premaster[0] & 0xff;
             premasterMinor = premaster[1] & 0xff;
         } else {
-            // DH, KRB5, others
+            // DH, others
             premasterMajor = -1;
             premasterMinor = -1;
         }
 
         try {
             byte[] master;
-
-            // TLS or FIPS ciphers at SSL 3.0 or TLS
-            // FIPS Ciphers - "SSL_RSA_FIPS_WITH_DES_CBC_SHA" or "SSL_RSA_FIPS_WITH_3DES_EDE_CBC_SHA"
-            // See http://www.mozilla.org/projects/security/pki/nss/ssl/fips-ssl-ciphersuites.html
-
             if (protocolVersion >= 0x0301) {
-
                 byte[] label;
                 byte[] seed;
-                byte[] extendedMasterSecretSessionHash = spec.getExtendedMasterSecretSessionHash();
-
+                byte[] extendedMasterSecretSessionHash =
+                        spec.getExtendedMasterSecretSessionHash();
                 if (extendedMasterSecretSessionHash.length != 0) {
                     label = LABEL_EXTENDED_MASTER_SECRET;
                     seed = extendedMasterSecretSessionHash;
                 } else {
-
                     byte[] clientRandom = spec.getClientRandom();
                     byte[] serverRandom = spec.getServerRandom();
                     label = LABEL_MASTER_SECRET;
                     seed = concat(clientRandom, serverRandom);
-                    if (clientRandom != null) {
-                        Arrays.fill(clientRandom, (byte) 0x00);
-                    }
-                    if (serverRandom != null) {
-                        Arrays.fill(serverRandom, (byte) 0x00);
-                    }
-
                 }
-
-                //byte[] seed = concat(clientRandom, serverRandom);
-                master = ((protocolVersion >= 0x0303)
-                        ? doTLS12PRF(provider, premaster, label, seed, 48, spec.getPRFHashAlg(),
-                                spec.getPRFHashLength(), spec.getPRFBlockSize())
-                        : doTLS10PRF(provider, premaster, label, seed, 48));
-                // fill intermediate arrays with 0x00 - FIPS requirement to
-                // reset arrays that
-                // got filled with random bytes from random or arrays containing
-                // key material.
-                Arrays.fill(seed, (byte) 0x00);
-
+                master = ((protocolVersion >= 0x0303) ?
+                        doTLS12PRF(premaster, label, seed, 48,
+                                spec.getPRFHashAlg(), spec.getPRFHashLength(),
+                                spec.getPRFBlockSize()) :
+                        doTLS10PRF(premaster, label, seed, 48));
             } else {
                 master = new byte[48];
-                MessageDigest md5 = MessageDigest.getInstance("MD5", provider);
-                MessageDigest sha = MessageDigest.getInstance("SHA-1", provider);
+                MessageDigest md5 = MessageDigest.getInstance("MD5");
+                MessageDigest sha = MessageDigest.getInstance("SHA");
+
                 byte[] clientRandom = spec.getClientRandom();
                 byte[] serverRandom = spec.getServerRandom();
-
                 byte[] tmp = new byte[20];
                 for (int i = 0; i < 3; i++) {
                     sha.update(SSL3_CONST[i]);
@@ -147,52 +143,27 @@ public final class TlsMasterSecretGenerator extends KeyGeneratorSpi {
                     md5.update(tmp);
                     md5.digest(master, i << 4, 16);
                 }
-                // fill intermediate arrays with 0x00 - FIPS requirement to
-                // reset arrays that
-                // got filled with random bytes from random or arrays containing
-                // key material.
-                Arrays.fill(tmp, (byte) 0x00);
-                if (clientRandom != null) {
-                    Arrays.fill(clientRandom, (byte) 0x00);
-                }
-                if (serverRandom != null) {
-                    Arrays.fill(serverRandom, (byte) 0x00);
-                }
 
             }
-            SecretKey sKey = new TlsMasterSecretKey(master, premasterMajor, premasterMinor);
-            // fill intermediate arrays with 0x00 - FIPS requirement to reset
-            // arrays that
-            // got filled with random bytes from random.
-            if (master != null) {
-                Arrays.fill(master, (byte) 0x00);
-            }
 
-            return sKey;
+            return new TlsMasterSecretKey(master, premasterMajor,
+                premasterMinor);
         } catch (NoSuchAlgorithmException e) {
             throw new ProviderException(e);
         } catch (DigestException e) {
             throw new ProviderException(e);
-        } finally {
-            // fill intermediate arrays with 0x00 - FIPS requirement to reset
-            // arrays that
-            // got filled with random bytes from random.
-            if (premaster != null) {
-                Arrays.fill(premaster, (byte) 0x00);
-            }
         }
     }
 
-    private static final class TlsMasterSecretKey
-            implements sun.security.internal.interfaces.TlsMasterSecret {
-        private static final long serialVersionUID = -2482619999063672417L;
+   @SuppressWarnings("deprecation")
+   private static final class TlsMasterSecretKey implements TlsMasterSecret {
+        private static final long serialVersionUID = 1019571680375368880L;
 
         private byte[] key;
         private final int majorVersion, minorVersion;
 
         TlsMasterSecretKey(byte[] key, int majorVersion, int minorVersion) {
-            // this.key = key;
-            this.key = (key == null) ? null : key.clone();
+            this.key = key;
             this.majorVersion = majorVersion;
             this.minorVersion = minorVersion;
         }
@@ -217,6 +188,21 @@ public final class TlsMasterSecretGenerator extends KeyGeneratorSpi {
             return key.clone();
         }
 
-    }
-
+       /**
+        * Restores the state of this object from the stream.
+        *
+        * @param  stream the {@code ObjectInputStream} from which data is read
+        * @throws IOException if an I/O error occurs
+        * @throws ClassNotFoundException if a serialized class cannot be loaded
+        */
+       private void readObject(ObjectInputStream stream)
+               throws IOException, ClassNotFoundException {
+           stream.defaultReadObject();
+           if ((key == null) || (key.length == 0)) {
+               throw new InvalidObjectException("TlsMasterSecretKey is null");
+           }
+           key = key.clone();
+       }
+   }
 }
+
