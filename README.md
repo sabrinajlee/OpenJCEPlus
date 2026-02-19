@@ -384,10 +384,6 @@ KeyGenerator                | HmacSHA3-384                    |X                
 KeyGenerator                | HmacSHA3-512                    |X                |X             |              |
 KeyGenerator                | HmacSHA384                      |X                |X             |              |
 KeyGenerator                | HmacSHA512                      |X                |X             |              |
-KeyGenerator                | SunTls12KeyMaterial             |X                |X             |              |
-KeyGenerator                | SunTls12MasterSecret            |X                |X             |              |
-KeyGenerator                | SunTls12Prf                     |X                |X             |              |
-KeyGenerator                | SunTls12RsaPremasterSecret      |X                |X             |              |
 KeyGenerator                | kda-hkdf-with-sha1              |                 |X             |              |
 KeyGenerator                | kda-hkdf-with-sha224            |X                |X             |              |
 KeyGenerator                | kda-hkdf-with-sha256            |X                |X             |              |
