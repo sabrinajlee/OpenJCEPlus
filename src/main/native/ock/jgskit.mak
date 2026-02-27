@@ -22,7 +22,9 @@ else ifeq (${PLATFORM},ppc-aix64)
   PLAT=ap
   CC=ibm-clang_r
   CFLAGS+= -DAIX -m64
-  LDFLAGS+= -brtl -m64
+  LDFLAGS+= -m64 -Wl,-b64 -Wl,-brtl -Wl,-blibpath:${GSKIT_HOME}/lib \
+	        -Wl,-brwexec_must -Wl,-bnoexpall -Wl,-bernotok \
+            -Wl,-bdatapsize:64k -Wl,-btextpsize:64k -Wl,-bstackpsize:64k
   OSINCLUDEDIR=aix
 else ifeq (${PLATFORM},ppcle-linux64)
   PLAT=xl
@@ -134,7 +136,11 @@ ${HOSTOUT}/%.o : %.c
 displaycompiler :
 	@echo "Compiler version: " && ${CC} --version
 	@echo "Building with ${CC} compiler..."
-	@echo "-------------------------------------"
+	@echo "PLATFORM: ${PLATFORM}"
+	@echo "PLAT: ${PLAT}"
+	@echo "CFLAGS: ${CFLAGS}"
+	@echo "LDFLAGS: ${LDFLAGS}"
+	@echo "-------------------------------"
 
 # Force BuildDate to be compiled every time.
 #
