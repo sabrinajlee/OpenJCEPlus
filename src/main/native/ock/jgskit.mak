@@ -22,7 +22,7 @@ else ifeq (${PLATFORM},ppc-aix64)
   PLAT=ap
   CC=ibm-clang_r
   CFLAGS+= -DAIX -m64
-  LDFLAGS+= -brtl -m64
+  LDFLAGS+=  -Wl,-b64 -Wl,-brtl
   OSINCLUDEDIR=aix
 else ifeq (${PLATFORM},ppcle-linux64)
   PLAT=xl
