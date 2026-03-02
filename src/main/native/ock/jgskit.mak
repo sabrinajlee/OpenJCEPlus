@@ -22,19 +22,8 @@ else ifeq (${PLATFORM},ppc-aix64)
   PLAT=ap
   CC=ibm-clang_r
   CFLAGS+= -DAIX -m64
-  # AIX linker flags (passed through ibm-clang_r to the AIX ld linker via -Wl,):
-  # -b64              : produce 64-bit XCOFF shared library
-  # -brtl             : enable Run-Time Linking (AIX dynamic linking model)
-  # -brwexec_must     : require read-write-execute memory protection
-  # -blibpath         : embed library search path (AIX RPATH equivalent)
-  # -bnoexpall        : do not export all symbols by default (AIX exports all by default)
-  # -bernotok         : error on unresolved symbols (equivalent to Linux -z,defs)
-  # -bcdtors:mbr::s   : sort constructor/destructor ordering per member
-  # -bdatapsize:64k   : use 64KB pages for data segment (TLB efficiency)
-  # -btextpsize:64k   : use 64KB pages for text (code) segment
-  # -bstackpsize:64k  : use 64KB pages for stack
-  LDFLAGS+= -Wl,-b64 -Wl,-brtl -Wl,-brwexec_must -Wl,-blibpath:/usr/lib:lib \
-            -Wl,-bnoexpall -Wl,-bernotok -Wl,-bcdtors:mbr::s \
+  LDFLAGS+= -m64 -Wl,-b64 -Wl,-brtl -Wl,-blibpath:${GSKIT_HOME}:${GSKIT_HOME}/lib64:${GSKIT_HOME}/lib \
+			-Wl,-brwexec_must -Wl,-bnoexpall -Wl,-bernotok -Wl,-bcdtors:mbr::s \
             -Wl,-bdatapsize:64k -Wl,-btextpsize:64k -Wl,-bstackpsize:64k
   OSINCLUDEDIR=aix
 else ifeq (${PLATFORM},ppcle-linux64)
