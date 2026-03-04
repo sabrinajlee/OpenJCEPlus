@@ -137,6 +137,16 @@ displaycompiler :
 	@echo "Compiler version: " && ${CC} --version
 	@echo "Building with ${CC} compiler..."
 	@echo "-------------------------------------"
+	@echo "PLATFORM: ${PLATFORM}"
+	@echo "PLAT: ${PLAT}"
+	@echo "CC: ${CC}"
+	@echo "CFLAGS: ${CFLAGS}"
+	@echo "LDFLAGS: ${LDFLAGS}"
+	@echo "GSKIT_HOME: ${GSKIT_HOME}"
+	@echo "JAVA_HOME: ${JAVA_HOME}"
+	@echo "TARGET: ${TARGET}"
+	@echo "===== End Configuration ====="
+	@echo ""
 
 # Force BuildDate to be compiled every time.
 #
