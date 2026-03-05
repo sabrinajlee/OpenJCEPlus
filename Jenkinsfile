@@ -39,6 +39,7 @@ import groovy.transform.Field;
  */
 def cloneOpenJCEPlus() {
     dir("openjceplus/OpenJCEPlus") {
+        echo "SABRINA'S REPO"
         if ((OPENJCEPLUS_REPO == "") && (OPENJCEPLUS_BRANCH == "")) {
             echo "Clone using default branch and repository."
             checkout scm
