@@ -167,7 +167,7 @@ def runOpenJCEPlus(command, software) {
     dir("openjceplus/OpenJCEPlus") {
         def additional_exports = ""
         if (software == "aix") {
-            //additional_exports = "export LIBPATH=$WORKSPACE/openjceplus/OCK/:$WORKSPACE/openjceplus/OCK/jgsk_sdk;"
+            additional_exports = "export LIBPATH=/usr/lib;"
         }
 
         def additional_envars = ADDITIONAL_ENVARS
