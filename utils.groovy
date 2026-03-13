@@ -169,7 +169,12 @@ def runOpenJCEPlus(command, software) {
         if (software == "aix") {
             //additional_exports = "export LIBPATH=$WORKSPACE/openjceplus/OCK/:$WORKSPACE/openjceplus/OCK/jgsk_sdk;"
             sh "echo '=== Embedded LIBPATH check ==='"
-            sh "dump -H target/jgskit-ap-64/libjgskit.so | grep -i libpath"
+            sh "dump -H $WORKSPACE/openjceplus/OpenJCEPlus/target/jgskit-ap-64/libjgskit.so | grep -i libpath || echo 'No LIBPATH found'"
+            sh "echo '=== Checking if library was built ==='"
+            sh "ls -la $WORKSPACE/openjceplus/OpenJCEPlus/target/jgskit-ap-64/libjgskit.so"
+            sh "echo '=== Checking OCK library locations ==='"
+            sh "ls -la $WORKSPACE/openjceplus/OCK/jgsk_sdk/lib64/libjgsk8iccs_64.so || echo 'Not in lib64'"
+            sh "ls -la $WORKSPACE/openjceplus/OCK/jgsk_sdk/libjgsk8iccs_64.so || echo 'Not in jgsk_sdk'"
         }
 
         def additional_envars = ADDITIONAL_ENVARS
