@@ -22,8 +22,7 @@ else ifeq (${PLATFORM},ppc-aix64)
   PLAT=ap
   CC=ibm-clang_r
   CFLAGS+= -DAIX -m64
-  LDFLAGS+= -m64 -Wl,-b64 -Wl,-brtl -Wl,-blibpath:${WORKSPACE}/openjceplus/OCK/:${WORKSPACE}/openjceplus/OCK/jgsk_sdk \
-	        -Wl,-brwexec_must -Wl,-bnoexpall -Wl,-bernotok -Wl,-bdatapsize:64k -Wl,-btextpsize:64k -Wl,-bstackpsize:64k
+  LDFLAGS+= -m64 -brtl -blibpath:${WORKSPACE}/openjceplus/OCK/:${WORKSPACE}/openjceplus/OCK/jgsk_sdk \
   OSINCLUDEDIR=aix
 else ifeq (${PLATFORM},ppcle-linux64)
   PLAT=xl
