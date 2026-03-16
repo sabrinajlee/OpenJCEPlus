@@ -167,7 +167,7 @@ def runOpenJCEPlus(command, software) {
     dir("openjceplus/OpenJCEPlus") {
         def additional_exports = ""
         if (software == "aix") {
-            //additional_exports = "export LIBPATH=$WORKSPACE/openjceplus/OCK/:$WORKSPACE/openjceplus/OCK/jgsk_sdk;"
+            additional_exports = "export LIBPATH=$WORKSPACE/openjceplus/OCK/:$WORKSPACE/openjceplus/OCK/jgsk_sdk;"
             sh "echo '=== Embedded LIBPATH check ==='"
             sh "dump -H $WORKSPACE/openjceplus/OpenJCEPlus/target/jgskit-ap-64/libjgskit.so | grep -i libpath || echo 'No LIBPATH found'"
             sh "echo '=== Checking if library was built ==='"
